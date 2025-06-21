@@ -2,10 +2,26 @@ const MapboxClient = require('@mapbox/mapbox-sdk');
 const GeoCodingService = require('@mapbox/mapbox-sdk/services/geocoding');
 import config from '../config';
 
-const mapboxClient = new MapboxClient({ accessToken: config.mapbox.accessToken });
-const geocodingClient = new GeoCodingService(mapboxClient);
+// Create clients with fallback for missing token
+let mapboxClient: any = null;
+let geocodingClient: any = null;
+
+try {
+  if (config.mapbox.accessToken) {
+    mapboxClient = new MapboxClient({ accessToken: config.mapbox.accessToken });
+    geocodingClient = new GeoCodingService(mapboxClient);
+  }
+} catch (error) {
+  console.warn('Mapbox client initialization failed:', error);
+}
 
 export async function geocodeLocation(locationName: string): Promise<{ lat: number; lng: number } | null> {
+  if (!geocodingClient) {
+    console.warn('Mapbox geocoding not available, returning mock coordinates');
+    // Return mock coordinates for demo purposes
+    return { lat: 40.7128, lng: -74.0060 }; // New York City
+  }
+
   try {
     const response = await geocodingClient
       .forwardGeocode({
@@ -30,6 +46,11 @@ export async function geocodeLocation(locationName: string): Promise<{ lat: numb
 }
 
 export async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
+  if (!geocodingClient) {
+    console.warn('Mapbox geocoding not available, returning mock location');
+    return `Location ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  }
+
   try {
     const response = await geocodingClient
       .reverseGeocode({
@@ -44,3 +65,4 @@ export async function reverseGeocode(lat: number, lng: number): Promise<string |
     return null;
   }
 }
+

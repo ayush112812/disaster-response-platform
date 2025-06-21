@@ -4,7 +4,7 @@
   "description": "Backend API for Disaster Response Coordination Platform",
   "main": "src/server.ts",
   "scripts": {
-    "build": "tsc --noEmitOnError false || echo 'Build completed with warnings'",
+    "build": "tsc --noEmitOnError false --skipLibCheck true || echo 'Build completed with warnings'",
     "start": "npm run build && node dist/server.js",
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "lint": "eslint . --ext .ts",
