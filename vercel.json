@@ -1,38 +1,14 @@
 {
   "version": 2,
-  "name": "disaster-response-platform",
-  "builds": [
+  "name": "disaster-response-frontend",
+  "buildCommand": "cd disaster-frontend && npm run build",
+  "outputDirectory": "disaster-frontend/dist",
+  "installCommand": "cd disaster-frontend && npm install",
+  "framework": "vite",
+  "rewrites": [
     {
-      "src": "backend/src/server.ts",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": ["backend/src/**"]
-      }
-    },
-    {
-      "src": "disaster-frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "disaster-frontend/dist"
-      }
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "backend/src/server.ts"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "disaster-frontend/dist/$1"
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  },
-  "functions": {
-    "backend/src/server.ts": {
-      "maxDuration": 30
-    }
-  }
+  ]
 }
