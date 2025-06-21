@@ -9,7 +9,11 @@ const requiredEnvVars = [
   'SUPABASE_URL',
   'SUPABASE_ANON_KEY',
   'SUPABASE_SERVICE_ROLE_KEY',
-  'JWT_SECRET',
+  'JWT_SECRET'
+];
+
+// Optional environment variables (for enhanced functionality)
+const optionalEnvVars = [
   'MAPBOX_ACCESS_TOKEN',
   'GEMINI_API_KEY'
 ];
@@ -19,6 +23,13 @@ export function validateEnv() {
     if (!process.env[envVar]) {
       console.error(`Missing required environment variable: ${envVar}`);
       process.exit(1);
+    }
+  }
+
+  // Log warnings for missing optional variables
+  for (const envVar of optionalEnvVars) {
+    if (!process.env[envVar]) {
+      console.warn(`Optional environment variable missing: ${envVar} - Some features may be limited`);
     }
   }
 }
@@ -43,14 +54,14 @@ export default {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   },
   
-  // Mapbox configuration
+  // Mapbox configuration (optional)
   mapbox: {
-    accessToken: process.env.MAPBOX_ACCESS_TOKEN!,
+    accessToken: process.env.MAPBOX_ACCESS_TOKEN || '',
   },
   
-  // Google Gemini configuration
+  // Google Gemini configuration (optional)
   gemini: {
-    apiKey: process.env.GEMINI_API_KEY!,
+    apiKey: process.env.GEMINI_API_KEY || '',
   },
   
   // CORS configuration
