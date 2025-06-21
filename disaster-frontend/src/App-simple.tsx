@@ -95,7 +95,7 @@ function App() {
         </Group>
 
         <Text size="sm" ta="center" mt="xl" c="dimmed">
-          Built with React + TypeScript + Mantine UI | Backend: Node.js + Express + Supabase
+          Built with React + TypeScript + Mantine UI | Backend: Node.js + Express + Supabase | Deployed Successfully!
         </Text>
       </Container>
     </MantineProvider>
