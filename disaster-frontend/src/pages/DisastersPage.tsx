@@ -84,9 +84,9 @@ function DisastersPage() {
         >
           <Group justify="space-between" mb="xs" wrap="nowrap">
             <Text fw={600} size="lg" lineClamp={1}>
-              {disaster.name}
+              {disaster.title}
             </Text>
-            <Badge 
+            <Badge
               color={severityColors[disaster.severity]}
               variant="filled"
               size="lg"
@@ -95,29 +95,37 @@ function DisastersPage() {
               {disaster.severity.charAt(0).toUpperCase() + disaster.severity.slice(1)}
             </Badge>
           </Group>
-          
+
           <Group gap="sm" mb="xs">
             <Text size="sm" color="dimmed">
-              <strong>Location:</strong> {disaster.location}
+              <strong>Location:</strong> {disaster.location_name}
             </Text>
             <Text size="sm" color="dimmed">
               <strong>Status:</strong> {disaster.status}
             </Text>
           </Group>
-          
+
           <Text size="sm" lineClamp={2}>
             {disaster.description}
           </Text>
-          
+
+          {disaster.tags && disaster.tags.length > 0 && (
+            <Group gap="xs" mt="sm">
+              {disaster.tags.map((tag, index) => (
+                <Badge key={index} variant="light" size="sm">
+                  {tag}
+                </Badge>
+              ))}
+            </Group>
+          )}
+
           <Group justify="space-between" mt="md" gap="xs">
             <Text size="xs" color="dimmed">
-              Started: {new Date(disaster.startDate).toLocaleDateString()}
+              Created: {new Date(disaster.created_at).toLocaleDateString()}
             </Text>
-            {disaster.endDate && (
-              <Text size="xs" color="dimmed">
-                Ended: {new Date(disaster.endDate).toLocaleDateString()}
-              </Text>
-            )}
+            <Text size="xs" color="dimmed">
+              Owner: {disaster.owner_id}
+            </Text>
           </Group>
         </Card>
       ))}

@@ -1,31 +1,56 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
-import { createClient } from '@supabase/supabase-js';
+import { Server as HttpServer } from 'http';
+
+import { initializeWebsocket } from './websocket';
+import routes from './routes';
+import { errorHandler } from './middleware/error';
+import { validate } from './middleware/validation';
+import config from './config';
 import dotenv from 'dotenv';
+import { createClient } from '@supabase/supabase-js';
 
 // Load environment variables
 dotenv.config();
 
-// Initialize Express
 const app = express();
+const httpServer = new HttpServer(app);
+
+// Initialize WebSocket server
+const io = initializeWebsocket(httpServer);
 
 // Middleware
 app.use(helmet());
-app.use(cors());
-app.use(express.json());
-app.use(morgan('dev'));
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:5173'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: false
+}));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Logging
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+}
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again after 15 minutes',
+  windowMs: config.rateLimit.windowMs,
+  max: config.rateLimit.max,
+  message: 'Too many requests from this IP, please try again later.'
 });
-
 app.use(limiter);
+
+// Add io to response locals for use in routes
+app.use((req: Request, res: Response, next: NextFunction) => {
+  res.locals.io = io;
+  next();
+});
 
 // Initialize Supabase
 const supabaseUrl = process.env.SUPABASE_URL || '';
@@ -37,15 +62,47 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   },
 });
 
+// API routes
+app.use(config.api.prefix, routes);
+
 // Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok', message: 'Server is running' });
+app.get('/health', (req: Request, res: Response) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    version: process.env.npm_package_version || '1.0.0'
+  });
 });
 
-// Error handling middleware
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+// 404 handler
+app.use((req: Request, res: Response) => {
+  res.status(404).json({ 
+    status: 'error',
+    message: 'Not Found',
+    path: req.path
+  });
 });
 
-export default app;
+// Error handling
+app.use(errorHandler);
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (err: Error) => {
+  console.error('Unhandled Rejection:', err);
+  // Close server & exit process
+  httpServer.close(() => process.exit(1));
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (err: Error) => {
+  console.error('Uncaught Exception:', err);
+  // Close server & exit process
+  httpServer.close(() => process.exit(1));
+});
+
+export default httpServer;
+
+
+
+

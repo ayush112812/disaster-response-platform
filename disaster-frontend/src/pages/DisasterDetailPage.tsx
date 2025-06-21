@@ -138,17 +138,17 @@ function DisasterDetailPage() {
       <Card shadow="sm" padding="xl" radius="md" withBorder>
         <Group justify="space-between" align="flex-start" mb="xl">
           <div>
-            <Title order={2} mb="sm">{disaster.name}</Title>
+            <Title order={2} mb="sm">{disaster.title}</Title>
             <Group mb="xs">
-              <Badge 
-                color={severityColors[disaster.severity as keyof typeof severityColors]} 
+              <Badge
+                color={severityColors[disaster.severity as keyof typeof severityColors]}
                 size="lg"
                 variant="light"
                 leftSection={<IconAlertTriangle size={14} style={{ marginRight: 4 }} />}
               >
                 {disaster.severity.charAt(0).toUpperCase() + disaster.severity.slice(1)}
               </Badge>
-              <Badge 
+              <Badge
                 color={statusColors[disaster.status as keyof typeof statusColors]}
                 size="lg"
                 variant="outline"
@@ -175,10 +175,10 @@ function DisasterDetailPage() {
               <IconMapPin size={20} style={{ marginRight: 8 }} />
               Location Details
             </Title>
-            <Text>{disaster.location}</Text>
-            {disaster.coordinates && (
+            <Text>{disaster.location_name}</Text>
+            {disaster.location && (
               <Text size="sm" c="dimmed" mt={4}>
-                Coordinates: {disaster.coordinates.lat}, {disaster.coordinates.lng}
+                Location: {disaster.location}
               </Text>
             )}
           </Paper>
@@ -195,53 +195,47 @@ function DisasterDetailPage() {
             <Paper p="md" withBorder>
               <Title order={4} mb="md">
                 <IconCalendar size={20} style={{ marginRight: 8 }} />
-                Start Date
+                Created Date
               </Title>
-              <Text>{new Date(disaster.startDate).toLocaleDateString()}</Text>
+              <Text>{new Date(disaster.created_at).toLocaleDateString()}</Text>
               <Text size="sm" c="dimmed">
-                {new Date(disaster.startDate).toLocaleTimeString()}
+                {new Date(disaster.created_at).toLocaleTimeString()}
               </Text>
             </Paper>
-            
-            {disaster.endDate && (
-              <Paper p="md" withBorder>
-                <Title order={4} mb="md">
-                  <IconCalendarDue size={20} style={{ marginRight: 8 }} />
-                  End Date
-                </Title>
-                <Text>{new Date(disaster.endDate).toLocaleDateString()}</Text>
-                <Text size="sm" c="dimmed">
-                  {new Date(disaster.endDate).toLocaleTimeString()}
-                </Text>
-              </Paper>
-            )}
+
+            <Paper p="md" withBorder>
+              <Title order={4} mb="md">
+                <IconCalendarDue size={20} style={{ marginRight: 8 }} />
+                Last Updated
+              </Title>
+              <Text>{new Date(disaster.updated_at).toLocaleDateString()}</Text>
+              <Text size="sm" c="dimmed">
+                {new Date(disaster.updated_at).toLocaleTimeString()}
+              </Text>
+            </Paper>
           </SimpleGrid>
           
-          {disaster.affectedAreas && disaster.affectedAreas.length > 0 && (
+          {disaster.tags && disaster.tags.length > 0 && (
             <Paper p="md" withBorder>
-              <Title order={4} mb="md">Affected Areas</Title>
+              <Title order={4} mb="md">Tags</Title>
               <Group gap="xs">
-                {disaster.affectedAreas.map((area: string, index: number) => (
+                {disaster.tags.map((tag: string, index: number) => (
                   <Badge key={index} variant="outline">
-                    {area}
+                    {tag}
                   </Badge>
                 ))}
               </Group>
             </Paper>
           )}
-          
-          {disaster.additionalInfo && (
-            <Paper p="md" withBorder>
-              <Title order={4} mb="md">Additional Information</Title>
-              <Text>{disaster.additionalInfo}</Text>
-            </Paper>
-          )}
-          
+
           <Paper p="md" withBorder>
-            <Title order={4} mb="md">Status</Title>
-            <Text>{disaster.status || 'Active'}</Text>
+            <Title order={4} mb="md">Owner Information</Title>
+            <Text>Owner ID: {disaster.owner_id}</Text>
             <Text size="sm" c="dimmed" mt={4}>
-              Last updated: {new Date(disaster.updatedAt || disaster.createdAt).toLocaleString()}
+              Created: {new Date(disaster.created_at).toLocaleString()}
+            </Text>
+            <Text size="sm" c="dimmed">
+              Last updated: {new Date(disaster.updated_at).toLocaleString()}
             </Text>
           </Paper>
         </Stack>

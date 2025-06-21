@@ -19,8 +19,46 @@ const queryClient = new QueryClient({
 
 // Create a theme instance
 const theme = createTheme({
-  /** Put your mantine theme override here */
-  fontFamily: 'Inter, sans-serif',
+  fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif',
+  primaryColor: 'blue',
+  colors: {
+    // Custom emergency colors
+    emergency: [
+      '#fff5f5',
+      '#fed7d7',
+      '#feb2b2',
+      '#fc8181',
+      '#f56565',
+      '#e53e3e',
+      '#c53030',
+      '#9b2c2c',
+      '#822727',
+      '#63171b'
+    ],
+  },
+  components: {
+    Card: {
+      defaultProps: {
+        shadow: 'sm',
+        radius: 'md',
+        withBorder: true,
+      },
+    },
+    Button: {
+      defaultProps: {
+        radius: 'md',
+      },
+    },
+    Badge: {
+      defaultProps: {
+        radius: 'sm',
+      },
+    },
+  },
+  headings: {
+    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif',
+    fontWeight: '600',
+  },
 });
 
 function App() {

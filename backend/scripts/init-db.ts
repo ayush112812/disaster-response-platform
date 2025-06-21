@@ -1,4 +1,4 @@
-import { supabase } from '../src/app';
+import { supabaseAdmin } from '../src/services/supabase';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -8,7 +8,7 @@ async function initDatabase() {
 
   try {
     // Enable PostGIS extension for geospatial queries
-    const { data: extensionData, error: extensionError } = await supabase
+    const { data: extensionData, error: extensionError } = await supabaseAdmin
       .rpc('create_extension', { extname: 'postgis' });
 
     if (extensionError && !extensionError.message.includes('already exists')) {
@@ -23,17 +23,16 @@ async function initDatabase() {
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         title TEXT NOT NULL,
         description TEXT,
-        location_name TEXT,
+        location_name TEXT NOT NULL,
         location GEOGRAPHY(Point, 4326),
-        start_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        end_time TIMESTAMPTZ,
-        severity TEXT CHECK (severity IN ('low', 'medium', 'high')),
-        status TEXT CHECK (status IN ('active', 'resolved', 'mitigated')),
+        disaster_type TEXT,
+        severity TEXT CHECK (severity IN ('low', 'medium', 'high')) DEFAULT 'medium',
+        status TEXT CHECK (status IN ('active', 'resolved', 'mitigated')) DEFAULT 'active',
         tags TEXT[],
-        created_by UUID,
+        owner_id TEXT NOT NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        metadata JSONB
+        audit_trail JSONB DEFAULT '[]'::jsonb
       )`,
       
       `CREATE TABLE IF NOT EXISTS resources (
@@ -45,11 +44,10 @@ async function initDatabase() {
         location GEOGRAPHY(Point, 4326),
         type TEXT NOT NULL,
         quantity INTEGER DEFAULT 1,
-        status TEXT CHECK (status IN ('available', 'in_use', 'depleted')),
-        created_by UUID,
+        contact_info JSONB,
+        created_by TEXT NOT NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        metadata JSONB
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )`,
       
       `CREATE TABLE IF NOT EXISTS reports (
@@ -73,7 +71,7 @@ async function initDatabase() {
     ];
 
     for (const table of tables) {
-      const { error } = await supabase.rpc('exec_sql', { query: table });
+      const { error } = await supabaseAdmin.rpc('exec_sql', { query: table });
       if (error) throw error;
     }
 
@@ -87,7 +85,7 @@ async function initDatabase() {
     ];
 
     for (const index of indexes) {
-      const { error } = await supabase.rpc('exec_sql', { query: index });
+      const { error } = await supabaseAdmin.rpc('exec_sql', { query: index });
       if (error) throw error;
     }
 

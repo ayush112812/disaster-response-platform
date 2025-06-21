@@ -1,7 +1,8 @@
-# Environment variables
+# Environment variables - CRITICAL FOR SECURITY
 .env
 .env.*
 !.env.example
+!.env.template
 
 # Sensitive files
 *.pem
@@ -10,6 +11,14 @@
 *.p12
 *.pfx
 *.cer
+config/secrets.json
+secrets/
+
+# API Keys and Tokens (extra protection)
+**/api-keys.json
+**/tokens.json
+**/*secret*
+**/*private*
 
 # Logs and databases
 logs/
@@ -17,6 +26,15 @@ logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+*.sqlite
+*.db
+
+# Build outputs
+dist/
+build/
+.next/
+.nuxt/
+.vuepress/dist/
 
 # Runtime data
 .idea/
@@ -26,6 +44,37 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw?
-node_modules
-node_modules
-node_modules
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+.nyc_output
+
+# Temporary files
+.tmp/
+temp/
+*.tmp
+*.temp
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Backup files
+*.backup
+*.bak
+*.swp
+*.swo
+
+# Production deployment files
+.vercel
+.netlify

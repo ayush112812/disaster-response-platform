@@ -1,4 +1,4 @@
-import { AppShell, Container } from '@mantine/core';
+import { AppShell, Container, Box } from '@mantine/core';
 import Navbar from '../components/Navbar';
 
 interface LayoutProps {
@@ -10,15 +10,28 @@ function Layout({ children }: LayoutProps) {
     <AppShell
       padding="md"
       header={{
-        height: 60,
+        height: 70,
         offset: false,
       }}
     >
-      <AppShell.Header p="xs">
+      <AppShell.Header
+        style={{
+          borderBottom: '1px solid #e9ecef',
+          backgroundColor: '#ffffff',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+        }}
+      >
         <Navbar />
       </AppShell.Header>
-      <AppShell.Main>
-        <Container size="lg">{children}</Container>
+      <AppShell.Main
+        style={{
+          backgroundColor: '#f8f9fa',
+          minHeight: 'calc(100vh - 70px)'
+        }}
+      >
+        <Box py="md">
+          {children}
+        </Box>
       </AppShell.Main>
     </AppShell>
   );
