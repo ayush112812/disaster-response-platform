@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "name": "disaster-response-platform",
+  "builds": [
+    {
+      "src": "backend/src/server.ts",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["backend/src/**"]
+      }
+    },
+    {
+      "src": "disaster-frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "disaster-frontend/dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "backend/src/server.ts"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "disaster-frontend/dist/$1"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "functions": {
+    "backend/src/server.ts": {
+      "maxDuration": 30
+    }
+  }
+}

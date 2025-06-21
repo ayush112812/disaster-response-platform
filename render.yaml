@@ -1,0 +1,47 @@
+services:
+  # Backend API Service
+  - type: web
+    name: disaster-response-backend
+    env: node
+    plan: free
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: MAPBOX_ACCESS_TOKEN
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: CORS_ORIGIN
+        value: https://disaster-response-frontend.onrender.com
+
+  # Frontend Static Site
+  - type: web
+    name: disaster-response-frontend
+    env: static
+    plan: free
+    buildCommand: cd disaster-frontend && npm install && npm run build
+    staticPublishPath: disaster-frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://disaster-response-backend.onrender.com/api
+      - key: VITE_WEBSOCKET_URL
+        value: wss://disaster-response-backend.onrender.com
+      - key: VITE_SOCKET_URL
+        value: https://disaster-response-backend.onrender.com
+      - key: VITE_MAPBOX_ACCESS_TOKEN
+        sync: false
+      - key: VITE_GEMINI_API_KEY
+        sync: false

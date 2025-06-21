@@ -1,14 +1,19 @@
 {
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
     "@mantine/core": "^8.1.1",
     "@mantine/dates": "^8.1.1",
     "@mantine/hooks": "^8.1.1",
     "@mantine/notifications": "^8.1.1",
+    "@mui/icons-material": "^7.1.2",
+    "@mui/material": "^7.1.2",
     "@tabler/icons-react": "^3.34.0",
     "@tanstack/react-query": "^5.80.12",
     "axios": "^1.10.0",
     "express-rate-limit": "^7.5.1",
     "leaflet": "^1.9.4",
+    "mapbox-gl": "^3.13.0",
     "react-leaflet": "^5.0.0",
     "react-router-dom": "^7.6.2"
   },

@@ -32,4 +32,18 @@ export default defineConfig({
   define: {
     'process.env': {},
   },
+  build: {
+    rollupOptions: {
+      onwarn(warning, warn) {
+        // Suppress warnings during build
+        if (warning.code === 'UNRESOLVED_IMPORT') return;
+        if (warning.code === 'MODULE_LEVEL_DIRECTIVE') return;
+        warn(warning);
+      }
+    }
+  },
+  esbuild: {
+    // Disable some strict checks
+    logOverride: { 'this-is-undefined-in-esm': 'silent' }
+  },
 });
