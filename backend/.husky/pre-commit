@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Check for sensitive data before committing
+if git diff --cached --name-only | xargs grep -l -E 'password|secret|key|token|api[_-]?key|auth|credential|pwd|jwt|private[_-]?key' | grep -v -E '\.(md|json|example|gitignore|husky|eslint|prettier)' | grep -v 'scripts/generate-secret\.js'; then
+  echo "\n❌ WARNING: Potential sensitive data detected in staged files!"
+  echo "   Please remove or properly secure sensitive information before committing.\n"
+  exit 1
+fi
+
+# Run lint-staged
+npx lint-staged
