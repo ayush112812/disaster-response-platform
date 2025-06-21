@@ -1,33 +1,18 @@
 {
   "version": 2,
-  "name": "disaster-response-frontend",
-  "buildCommand": "cd disaster-frontend && npm run build",
-  "outputDirectory": "disaster-frontend/dist",
-  "installCommand": "cd disaster-frontend && npm install",
-  "framework": "vite",
-  "rewrites": [
+  "builds": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "disaster-frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
     }
   ],
-  "headers": [
+  "routes": [
     {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        },
-        {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
-        }
-      ]
+      "src": "/(.*)",
+      "dest": "disaster-frontend/dist/$1"
     }
   ]
 }
