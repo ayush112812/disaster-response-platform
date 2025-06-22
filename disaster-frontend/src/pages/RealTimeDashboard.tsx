@@ -123,10 +123,10 @@ function RealTimeDashboard() {
 
   // Initialize with mock data on component mount
   useEffect(() => {
-    if (!realtimeData) {
-      console.log('🎭 Initializing with mock data');
-      setRealtimeData(generateMockData());
-    }
+    console.log('🎭 Initializing Real-Time Dashboard with mock data');
+    const mockData = generateMockData();
+    setRealtimeData(mockData);
+    console.log('✅ Mock data initialized:', mockData);
   }, []);
 
   // Generate mock real-time data
@@ -239,16 +239,21 @@ function RealTimeDashboard() {
     queryKey: ['realtime-data'],
     queryFn: async () => {
       try {
+        console.log('🔍 Attempting to fetch real-time data from API...');
         const response = await api.get('/realtime/data');
+        console.log('✅ Successfully fetched real-time data:', response.data);
         return response.data;
       } catch (error) {
-        console.warn('Failed to fetch real-time data from API, using mock data:', error);
-        // Return mock data if API fails
-        return generateMockData();
+        console.warn('⚠️ Failed to fetch real-time data from API, using mock data:', error);
+        // Always return mock data if API fails
+        const mockData = generateMockData();
+        console.log('🎭 Generated mock data:', mockData);
+        return mockData;
       }
     },
-    retry: 1,
+    retry: 0, // Don't retry, just use mock data
     refetchInterval: 30000, // Refetch every 30 seconds
+    staleTime: 0, // Always consider data stale
   });
 
   // Fetch real-time statistics with fallback
@@ -260,12 +265,14 @@ function RealTimeDashboard() {
     queryKey: ['realtime-stats'],
     queryFn: async () => {
       try {
+        console.log('📊 Attempting to fetch real-time stats from API...');
         const response = await api.get('/realtime/stats');
+        console.log('✅ Successfully fetched stats:', response.data);
         return response.data;
       } catch (error) {
-        console.warn('Failed to fetch real-time stats from API, using mock stats:', error);
-        // Return mock stats if API fails
-        return {
+        console.warn('⚠️ Failed to fetch real-time stats from API, using mock stats:', error);
+        // Always return mock stats if API fails
+        const mockStats = {
           totalAlerts: 6,
           highPriorityCount: 3,
           breakdown: {
@@ -281,12 +288,15 @@ function RealTimeDashboard() {
             minor: 1
           },
           lastUpdated: new Date().toISOString(),
-          dataFreshness: 30000
+          dataFreshness: Math.floor(Math.random() * 60000) + 10000 // Random freshness 10-70s
         };
+        console.log('📊 Generated mock stats:', mockStats);
+        return mockStats;
       }
     },
-    retry: 1,
+    retry: 0, // Don't retry, just use mock data
     refetchInterval: 30000,
+    staleTime: 0,
   });
 
   // WebSocket listeners for real-time updates
@@ -322,8 +332,15 @@ function RealTimeDashboard() {
     return () => clearInterval(interval);
   }, [refetch, connected]);
 
-  // Use real-time data if available, otherwise use initial data
-  const currentData = realtimeData || initialData;
+  // Use real-time data if available, otherwise use initial data, fallback to mock data
+  const currentData = realtimeData || initialData || generateMockData();
+
+  // Always ensure we have data
+  if (!currentData) {
+    console.warn('⚠️ No data available, generating emergency mock data');
+    const emergencyData = generateMockData();
+    setRealtimeData(emergencyData);
+  }
 
   // Calculate totals if not already calculated
   if (currentData && (currentData.totalAlerts === 0 || !currentData.totalAlerts)) {
@@ -339,6 +356,8 @@ function RealTimeDashboard() {
       (currentData.socialMediaAlerts?.filter(s => s.urgencyScore >= 4).length || 0) +
       (currentData.newsAlerts?.filter(n => n.severity === 'high').length || 0);
   }
+
+  console.log('📊 Current data being displayed:', currentData);
 
   const handleRefresh = async () => {
     try {
@@ -441,9 +460,10 @@ function RealTimeDashboard() {
         </Group>
       </Alert>
 
-      {isLoading && !currentData ? (
+      {(isLoading && !currentData && !realtimeData) ? (
         <div style={{ position: 'relative', minHeight: 400 }}>
           <LoadingOverlay visible />
+          <Text ta="center" mt="xl" c="dimmed">Loading real-time data...</Text>
         </div>
       ) : (
         <Tabs value={activeTab} onChange={setActiveTab}>
