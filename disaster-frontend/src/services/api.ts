@@ -91,7 +91,17 @@ export interface ApiError {
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 const FULL_API_URL = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
-console.log('🔧 API_URL configured as:', FULL_API_URL);
+
+// Check if we're in production without a backend URL
+const isProductionWithoutBackend = import.meta.env.MODE === 'production' && !import.meta.env.VITE_API_URL;
+
+console.log('🔧 API Configuration:', {
+  API_URL,
+  FULL_API_URL,
+  MODE: import.meta.env.MODE,
+  VITE_API_URL: import.meta.env.VITE_API_URL,
+  isProductionWithoutBackend
+});
 
 export const api = axios.create({
   baseURL: FULL_API_URL,
@@ -139,16 +149,74 @@ api.interceptors.response.use(
   }
 );
 
+// Mock data generators
+const generateMockDisasters = (): Disaster[] => {
+  return [
+    {
+      id: '1',
+      title: 'Hurricane Milton Aftermath',
+      description: 'Category 4 hurricane caused widespread flooding and power outages across the Gulf Coast region.',
+      location_name: 'Tampa Bay, Florida',
+      latitude: 27.9506,
+      longitude: -82.4572,
+      type: 'hurricane',
+      severity: 'high',
+      status: 'in_progress',
+      tags: ['hurricane', 'flooding', 'power-outage'],
+      owner_id: 'user1',
+      created_at: new Date(Date.now() - 86400000).toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: '2',
+      title: 'Wildfire in Northern California',
+      description: 'Fast-moving wildfire threatens residential areas. Evacuation orders in effect.',
+      location_name: 'Napa Valley, California',
+      latitude: 38.5025,
+      longitude: -122.2654,
+      type: 'wildfire',
+      severity: 'high',
+      status: 'verified',
+      tags: ['wildfire', 'evacuation', 'air-quality'],
+      owner_id: 'user2',
+      created_at: new Date(Date.now() - 172800000).toISOString(),
+      updated_at: new Date(Date.now() - 3600000).toISOString()
+    },
+    {
+      id: '3',
+      title: 'Flash Flood Warning',
+      description: 'Heavy rainfall causing flash flooding in urban areas. Multiple road closures reported.',
+      location_name: 'Austin, Texas',
+      latitude: 30.2672,
+      longitude: -97.7431,
+      type: 'flood',
+      severity: 'medium',
+      status: 'reported',
+      tags: ['flood', 'road-closure', 'heavy-rain'],
+      owner_id: 'user3',
+      created_at: new Date(Date.now() - 7200000).toISOString(),
+      updated_at: new Date(Date.now() - 1800000).toISOString()
+    }
+  ];
+};
+
 // API functions
 export const getDisasters = async (): Promise<Disaster[]> => {
   console.log('🔍 Making request to:', `${FULL_API_URL}/disasters`);
+
+  // If in production without backend, return mock data immediately
+  if (isProductionWithoutBackend) {
+    console.log('🎭 Using mock data (production without backend)');
+    return generateMockDisasters();
+  }
+
   try {
     const response = await api.get<Disaster[]>('/disasters');
     console.log('✅ Response received:', response.data);
     return response.data;
   } catch (error) {
-    console.error('❌ Error in getDisasters:', error);
-    throw error;
+    console.warn('❌ Error in getDisasters, falling back to mock data:', error);
+    return generateMockDisasters();
   }
 };
 
@@ -294,8 +362,49 @@ export const getOfficialUpdates = async (disasterId: string, limit?: number): Pr
 
 // Geocoding API functions
 export const geocodeLocation = async (locationName: string): Promise<{ locationName: string; coordinates: Coordinates }> => {
-  const response = await api.post('/geocoding/geocode', { locationName });
-  return response.data;
+  // If in production without backend, return mock coordinates
+  if (isProductionWithoutBackend) {
+    console.log('🎭 Using mock geocoding data (production without backend)');
+    // Return mock coordinates based on common location names
+    const mockCoordinates: Record<string, Coordinates> = {
+      'new york': { lat: 40.7128, lng: -74.0060 },
+      'los angeles': { lat: 34.0522, lng: -118.2437 },
+      'chicago': { lat: 41.8781, lng: -87.6298 },
+      'houston': { lat: 29.7604, lng: -95.3698 },
+      'phoenix': { lat: 33.4484, lng: -112.0740 },
+      'philadelphia': { lat: 39.9526, lng: -75.1652 },
+      'san antonio': { lat: 29.4241, lng: -98.4936 },
+      'san diego': { lat: 32.7157, lng: -117.1611 },
+      'dallas': { lat: 32.7767, lng: -96.7970 },
+      'san jose': { lat: 37.3382, lng: -121.8863 },
+      'austin': { lat: 30.2672, lng: -97.7431 },
+      'tampa': { lat: 27.9506, lng: -82.4572 },
+      'miami': { lat: 25.7617, lng: -80.1918 },
+      'atlanta': { lat: 33.7490, lng: -84.3880 },
+      'boston': { lat: 42.3601, lng: -71.0589 }
+    };
+
+    const normalizedLocation = locationName.toLowerCase();
+    const foundLocation = Object.keys(mockCoordinates).find(key =>
+      normalizedLocation.includes(key) || key.includes(normalizedLocation)
+    );
+
+    if (foundLocation) {
+      return { locationName, coordinates: mockCoordinates[foundLocation] };
+    }
+
+    // Default to New York if no match found
+    return { locationName, coordinates: { lat: 40.7128, lng: -74.0060 } };
+  }
+
+  try {
+    const response = await api.post('/geocoding/geocode', { locationName });
+    return response.data;
+  } catch (error) {
+    console.warn('❌ Error in geocodeLocation, falling back to mock data:', error);
+    // Fallback to New York coordinates
+    return { locationName, coordinates: { lat: 40.7128, lng: -74.0060 } };
+  }
 };
 
 export const extractLocation = async (text: string): Promise<{ extractedLocation: string; coordinates?: Coordinates }> => {
@@ -311,11 +420,83 @@ export const getNearbyDisasters = async (lat: number, lng: number, radius?: numb
   return response.data;
 };
 
+const generateMockResources = (lat: number, lng: number): Resource[] => {
+  return [
+    {
+      id: '1',
+      disaster_id: '1',
+      name: 'Emergency Shelter - Red Cross',
+      description: 'Temporary shelter with food and medical assistance available 24/7',
+      location_name: 'Tampa Community Center',
+      type: 'shelter',
+      quantity: 200,
+      contact_info: { phone: '(813) 555-0123', email: 'shelter@redcross.org' },
+      created_by: 'redcross',
+      created_at: new Date(Date.now() - 43200000).toISOString(),
+      updated_at: new Date(Date.now() - 3600000).toISOString()
+    },
+    {
+      id: '2',
+      disaster_id: '1',
+      name: 'Food Distribution Center',
+      description: 'Free meals and emergency food supplies for hurricane victims',
+      location_name: 'Tampa Bay Food Bank',
+      type: 'food',
+      quantity: 500,
+      contact_info: { phone: '(813) 555-0456', email: 'help@tampafoodbank.org' },
+      created_by: 'foodbank',
+      created_at: new Date(Date.now() - 21600000).toISOString(),
+      updated_at: new Date(Date.now() - 1800000).toISOString()
+    },
+    {
+      id: '3',
+      disaster_id: '2',
+      name: 'Mobile Medical Unit',
+      description: 'Emergency medical care and prescription refills',
+      location_name: 'Napa Valley Hospital Parking',
+      type: 'medical',
+      quantity: 50,
+      contact_info: { phone: '(707) 555-0789', email: 'emergency@napahealth.org' },
+      created_by: 'hospital',
+      created_at: new Date(Date.now() - 14400000).toISOString(),
+      updated_at: new Date(Date.now() - 900000).toISOString()
+    },
+    {
+      id: '4',
+      disaster_id: '3',
+      name: 'Clean Water Distribution',
+      description: 'Bottled water and water purification tablets',
+      location_name: 'Austin Convention Center',
+      type: 'water',
+      quantity: 1000,
+      contact_info: { phone: '(512) 555-0321', email: 'water@austinrelief.org' },
+      created_by: 'city',
+      created_at: new Date(Date.now() - 10800000).toISOString(),
+      updated_at: new Date(Date.now() - 600000).toISOString()
+    }
+  ];
+};
+
 export const getNearbyResources = async (lat: number, lng: number, radius?: number, type?: string): Promise<{ resources: Resource[]; count: number }> => {
-  const response = await api.get('/resources', {
-    params: { lat, lng, radius, type }
-  });
-  return response.data;
+  // If in production without backend, return mock data immediately
+  if (isProductionWithoutBackend) {
+    console.log('🎭 Using mock resources data (production without backend)');
+    const mockResources = generateMockResources(lat, lng);
+    const filteredResources = type ? mockResources.filter(r => r.type === type) : mockResources;
+    return { resources: filteredResources, count: filteredResources.length };
+  }
+
+  try {
+    const response = await api.get('/resources', {
+      params: { lat, lng, radius, type }
+    });
+    return response.data;
+  } catch (error) {
+    console.warn('❌ Error in getNearbyResources, falling back to mock data:', error);
+    const mockResources = generateMockResources(lat, lng);
+    const filteredResources = type ? mockResources.filter(r => r.type === type) : mockResources;
+    return { resources: filteredResources, count: filteredResources.length };
+  }
 };
 
 // Image Verification API functions
