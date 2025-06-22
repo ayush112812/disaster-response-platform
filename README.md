@@ -2,6 +2,22 @@
 
 A MERN stack application for coordinating disaster response efforts by aggregating real-time data from multiple sources.
 
+## 🤖 **AI Tool Usage Declaration**
+
+**This project was developed extensively using AI-powered coding tools:**
+- **Primary Tool**: Cursor/Windsurf with Claude Sonnet 4
+- **AI-Generated Code**: 95%+ of the codebase
+- **Development Approach**: AI-first development with human oversight
+
+### **Key AI Contributions:**
+- **Cursor generated WebSocket logic** for real-time disaster updates and notifications
+- **Windsurf generated Gemini API integration** for location extraction and image verification
+- **Cursor generated PostGIS geospatial queries** for location-based resource finding
+- **Windsurf generated mock social media logic** for social media monitoring and urgency scoring
+- **Cursor generated interactive mapping** with Leaflet integration and custom markers
+- **Windsurf generated dashboard logic** for real-time monitoring and data visualization
+- **AI-generated optimization** including caching, rate limiting, and deployment configuration
+
 ## Features
 
 - **Disaster Management**: CRUD operations for disaster records with location tracking
