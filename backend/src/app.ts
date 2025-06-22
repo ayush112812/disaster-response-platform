@@ -30,6 +30,7 @@ const allowedOrigins = process.env.NODE_ENV === 'production'
       'https://disaster-response-platform-sqaj.vercel.app',
       'https://disaster-response-platform-8t9k.vercel.app',
       'https://disaster-response-platform-7qlu.vercel.app',
+      'https://disaster-response-platform-swart.vercel.app',
       process.env.ALLOWED_ORIGINS?.split(',') || []
     ].flat()
   : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:5173'];
