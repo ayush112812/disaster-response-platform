@@ -12,8 +12,8 @@ interface Config {
 }
 
 const development: Config = {
-  apiUrl: 'http://localhost:5000',
-  websocketUrl: 'ws://localhost:5000',
+  apiUrl: 'http://localhost:5001',
+  websocketUrl: 'ws://localhost:5001',
   mapboxToken: import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || '',
   geminiApiKey: import.meta.env.VITE_GEMINI_API_KEY || '',
   features: {
@@ -38,8 +38,8 @@ const production: Config = {
 };
 
 const test: Config = {
-  apiUrl: 'http://localhost:5000',
-  websocketUrl: 'ws://localhost:5000',
+  apiUrl: 'http://localhost:5001',
+  websocketUrl: 'ws://localhost:5001',
   mapboxToken: 'test-mapbox-token',
   geminiApiKey: 'test-gemini-api-key',
   features: {

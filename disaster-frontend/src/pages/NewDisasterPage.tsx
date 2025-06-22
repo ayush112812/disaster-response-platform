@@ -10,15 +10,13 @@ import {
   Select,
   MultiSelect,
   Stack,
-  Alert,
-  Notification
+  Alert
 } from '@mantine/core';
 import { 
   IconAlertTriangle, 
   IconMapPin, 
   IconArrowLeft,
-  IconCheck,
-  IconX
+  IconCheck
 } from '@tabler/icons-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
@@ -83,7 +81,11 @@ function NewDisasterPage() {
       return;
     }
     
-    createDisasterMutation.mutate(formData);
+    createDisasterMutation.mutate({
+      ...formData,
+      status: 'active' as const,
+      owner_id: 'anonymous'
+    });
   };
 
   const handleInputChange = (field: string, value: any) => {
@@ -186,12 +188,6 @@ function NewDisasterPage() {
               onChange={(value) => handleInputChange('tags', value)}
               data={commonTags}
               searchable
-              creatable
-              getCreateLabel={(query) => `+ Create "${query}"`}
-              onCreate={(query) => {
-                const item = { value: query, label: query };
-                return item;
-              }}
             />
 
             <Group justify="space-between" mt="xl">

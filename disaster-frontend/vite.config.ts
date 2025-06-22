@@ -12,13 +12,13 @@ export default defineConfig({
     })
   ],
   server: {
-    port: 3000,
+    port: 3001,
     host: '0.0.0.0',
     strictPort: true,
     open: true,
   },
   preview: {
-    port: 3000,
+    port: 3001,
     host: true,
   },
   resolve: {
@@ -31,19 +31,5 @@ export default defineConfig({
   },
   define: {
     'process.env': {},
-  },
-  build: {
-    rollupOptions: {
-      onwarn(warning, warn) {
-        // Suppress warnings during build
-        if (warning.code === 'UNRESOLVED_IMPORT') return;
-        if (warning.code === 'MODULE_LEVEL_DIRECTIVE') return;
-        warn(warning);
-      }
-    }
-  },
-  esbuild: {
-    // Disable some strict checks
-    logOverride: { 'this-is-undefined-in-esm': 'silent' }
   },
 });

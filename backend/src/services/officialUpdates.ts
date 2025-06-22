@@ -30,8 +30,6 @@ export interface OfficialUpdate {
   published_at: string;
   created_at?: string;
   updated_at?: string;
-  disasterRelevance?: number;
-  date?: string;
 }
 
 export interface OfficialUpdateFilters {
@@ -157,7 +155,7 @@ export async function scrapeOfficialUpdates(
           }
         });
       } catch (error) {
-        console.error(`Error scraping ${source.name}:`, error instanceof Error ? error.message : 'Unknown error');
+        console.error(`Error scraping ${source.name}:`, error.message);
         // Continue with other sources even if one fails
       }
     }
@@ -166,15 +164,11 @@ export async function scrapeOfficialUpdates(
     return updates
       .sort((a, b) => {
         // First by relevance (descending)
-        const aRelevance = a.disasterRelevance || 0;
-        const bRelevance = b.disasterRelevance || 0;
-        if (aRelevance !== bRelevance) {
-          return bRelevance - aRelevance;
+        if (a.disasterRelevance !== b.disasterRelevance) {
+          return b.disasterRelevance - a.disasterRelevance;
         }
         // Then by date (newest first)
-        const aDate = a.date || a.published_at;
-        const bDate = b.date || b.published_at;
-        return new Date(bDate).getTime() - new Date(aDate).getTime();
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
       })
       .slice(0, 10); // Return top 10 most relevant updates
       
@@ -209,49 +203,28 @@ function calculateRelevance(disasterTitle: string, updateTitle: string, tags: st
 }
 
 // Fallback mock data
-function getMockOfficialUpdates(disasterId: string): OfficialUpdate[] {
-  const now = new Date().toISOString();
-  const today = now.split('T')[0];
-
+function getMockOfficialUpdates(disasterId: string) {
   return [
     {
-      id: uuidv4(),
-      disaster_id: disasterId,
       source: 'FEMA',
       title: 'Federal Disaster Declaration for Recent Flooding',
-      description: 'The President has declared a federal emergency for the affected region.',
       url: 'https://www.fema.gov/disaster/example',
-      published_at: today,
-      created_at: now,
-      updated_at: now,
-      disasterRelevance: 5,
-      date: today
+      date: new Date().toISOString().split('T')[0],
+      disasterRelevance: 5
     },
     {
-      id: uuidv4(),
-      disaster_id: disasterId,
       source: 'Red Cross',
       title: 'Emergency Shelters Open for Flood Victims',
-      description: 'The Red Cross has opened emergency shelters in the affected area.',
       url: 'https://www.redcross.org/example',
-      published_at: today,
-      created_at: now,
-      updated_at: now,
-      disasterRelevance: 4,
-      date: today
+      date: new Date().toISOString().split('T')[0],
+      disasterRelevance: 4
     },
     {
-      id: uuidv4(),
-      disaster_id: disasterId,
       source: 'Local Government',
       title: 'Emergency Response Plan Activated',
-      description: 'Local authorities have activated emergency response protocols.',
       url: 'https://www.nyc.gov/example',
-      published_at: today,
-      created_at: now,
-      updated_at: now,
-      disasterRelevance: 3,
-      date: today
+      date: new Date().toISOString().split('T')[0],
+      disasterRelevance: 3
     }
   ];
 }

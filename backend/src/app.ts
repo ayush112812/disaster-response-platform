@@ -24,8 +24,18 @@ const io = initializeWebsocket(httpServer);
 
 // Middleware
 app.use(helmet());
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? [
+      'https://disaster-response-platform.vercel.app',
+      'https://disaster-response-platform-sqaj.vercel.app',
+      'https://disaster-response-platform-8t9k.vercel.app',
+      'https://disaster-response-platform-7qlu.vercel.app',
+      process.env.ALLOWED_ORIGINS?.split(',') || []
+    ].flat()
+  : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:5173'];
+
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5173'],
+  origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: false

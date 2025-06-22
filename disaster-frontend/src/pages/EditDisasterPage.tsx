@@ -57,7 +57,7 @@ function EditDisasterPage() {
         description: disaster.description || '',
         location_name: disaster.location_name || '',
         severity: disaster.severity || 'medium',
-        status: disaster.status || 'active',
+        status: (disaster.status === 'mitigated' ? 'monitoring' : disaster.status) || 'active',
         tags: disaster.tags || []
       });
     }
@@ -258,12 +258,6 @@ function EditDisasterPage() {
               onChange={(value) => handleInputChange('tags', value)}
               data={commonTags}
               searchable
-              creatable
-              getCreateLabel={(query) => `+ Create "${query}"`}
-              onCreate={(query) => {
-                const item = { value: query, label: query };
-                return item;
-              }}
             />
 
             <Group justify="space-between" mt="xl">

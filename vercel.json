@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "name": "disaster-response-platform",
+  "buildCommand": "cd disaster-frontend && npm ci && npm run build",
+  "outputDirectory": "disaster-frontend/dist",
+  "installCommand": "cd disaster-frontend && npm ci",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

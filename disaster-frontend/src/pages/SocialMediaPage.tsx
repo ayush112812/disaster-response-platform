@@ -197,7 +197,7 @@ function SocialMediaPage() {
                       </Group>
                       {post.tags && (
                         <Group gap="xs" mt="xs">
-                          {post.tags.map((tag, index) => (
+                          {post.tags.map((tag: string, index: number) => (
                             <Badge key={index} size="xs" variant="outline">
                               #{tag}
                             </Badge>
@@ -256,7 +256,7 @@ function SocialMediaPage() {
                       </Group>
                       {post.tags && (
                         <Group gap="xs" mt="xs">
-                          {post.tags.map((tag, index) => (
+                          {post.tags.map((tag: string, index: number) => (
                             <Badge key={index} size="xs" variant="outline">
                               #{tag}
                             </Badge>

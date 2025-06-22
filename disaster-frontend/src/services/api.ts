@@ -75,11 +75,12 @@ export interface ApiError {
   details?: Record<string, string>;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-console.log('🔧 API_URL configured as:', API_URL);
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+const FULL_API_URL = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
+console.log('🔧 API_URL configured as:', FULL_API_URL);
 
 export const api = axios.create({
-  baseURL: API_URL,
+  baseURL: FULL_API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -126,7 +127,7 @@ api.interceptors.response.use(
 
 // API functions
 export const getDisasters = async (): Promise<Disaster[]> => {
-  console.log('🔍 Making request to:', `${API_URL}/disasters`);
+  console.log('🔍 Making request to:', `${FULL_API_URL}/disasters`);
   try {
     const response = await api.get<Disaster[]>('/disasters');
     console.log('✅ Response received:', response.data);
@@ -138,7 +139,7 @@ export const getDisasters = async (): Promise<Disaster[]> => {
 };
 
 export const getDisaster = async (id: string): Promise<Disaster> => {
-  console.log('🔍 Making request to:', `${API_URL}/disasters/${id}`);
+  console.log('🔍 Making request to:', `${FULL_API_URL}/disasters/${id}`);
   try {
     const response = await api.get<Disaster>(`/disasters/${id}`);
     console.log('✅ Disaster response received:', response.data);
@@ -283,34 +284,4 @@ export const getNearbyResources = async (lat: number, lng: number, radius?: numb
 export const verifyImage = async (disasterId: string, imageUrl: string): Promise<{ isAuthentic: boolean; confidence: number; analysis: string; reportId: string }> => {
   const response = await api.post(`/disasters/${disasterId}/verify-image`, { imageUrl });
   return response.data;
-};
-
-// Additional exports for compatibility
-export const fetchDisasters = getDisasters;
-export const fetchResources = async (disasterId?: string): Promise<Resource[]> => {
-  if (disasterId) {
-    return getResources(disasterId);
-  }
-  // Return all resources if no disaster ID provided
-  const response = await api.get<Resource[]>('/resources');
-  return response.data;
-};
-
-export const fetchDisasterUpdates = async (disasterId: string): Promise<OfficialUpdate[]> => {
-  const result = await getOfficialUpdates(disasterId);
-  return result.updates;
-};
-
-export const fetchDisasterResources = async (disasterId: string): Promise<Resource[]> => {
-  return getResources(disasterId);
-};
-
-export const addResource = createResource;
-export const updateResource = async (id: string, data: Partial<Resource>): Promise<Resource> => {
-  const response = await api.put<Resource>(`/resources/${id}`, data);
-  return response.data;
-};
-
-export const deleteResource = async (id: string): Promise<void> => {
-  await api.delete(`/resources/${id}`);
 };

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { TextInput, Select, Button, Stack, Paper, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { addResource, Resource } from '../services/api';
+import { createResource, Resource } from '../services/api';
 
 interface ResourceFormProps {
   disasterId: string;
@@ -23,12 +23,14 @@ export function ResourceForm({ disasterId, resource, onSuccess }: ResourceFormPr
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     name: resource?.name || '',
+    description: resource?.description || '',
     location_name: resource?.location_name || '',
-    type: resource?.type || ''
+    type: resource?.type || '',
+    quantity: resource?.quantity || 1
   });
 
   const mutation = useMutation({
-    mutationFn: (data: typeof formData) => addResource(disasterId, data),
+    mutationFn: (data: typeof formData) => createResource(disasterId, data as any),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['resources', disasterId] });
       notifications.show({
@@ -66,10 +68,25 @@ export function ResourceForm({ disasterId, resource, onSuccess }: ResourceFormPr
           />
           <TextInput
             required
+            label="Description"
+            placeholder="Enter resource description"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          />
+          <TextInput
+            required
             label="Location"
             placeholder="Enter location name"
             value={formData.location_name}
             onChange={(e) => setFormData({ ...formData, location_name: e.target.value })}
+          />
+          <TextInput
+            required
+            label="Quantity"
+            type="number"
+            placeholder="Enter quantity"
+            value={formData.quantity}
+            onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
           />
           <Select
             required

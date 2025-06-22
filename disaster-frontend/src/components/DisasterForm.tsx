@@ -41,7 +41,12 @@ export function DisasterForm({ disaster, onSuccess }: DisasterFormProps) {
     mutationFn: (data: typeof formData) => {
       return disaster
         ? updateDisaster(disaster.id, data)
-        : createDisaster(data);
+        : createDisaster({
+            ...data,
+            severity: 'medium' as const,
+            status: 'active' as const,
+            owner_id: 'anonymous'
+          });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['disasters'] });
@@ -100,8 +105,6 @@ export function DisasterForm({ disaster, onSuccess }: DisasterFormProps) {
             value={formData.tags}
             onChange={(value) => setFormData({ ...formData, tags: value })}
             searchable
-            creatable
-            getCreateLabel={(query) => `+ Create ${query}`}
           />
           <Button type="submit" loading={mutation.isPending}>
             {disaster ? 'Update Disaster' : 'Report Disaster'}

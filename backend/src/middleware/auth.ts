@@ -11,7 +11,7 @@ export interface AuthenticatedRequest extends Request {
 }
 
 // Mock users for testing (as required by assignment)
-const MOCK_USERS: Record<string, { userId: string; role: string }> = {
+const MOCK_USERS = {
   'netrunnerX': { userId: 'netrunnerX', role: 'admin' },
   'reliefAdmin': { userId: 'reliefAdmin', role: 'admin' },
   'citizen1': { userId: 'citizen1', role: 'contributor' },

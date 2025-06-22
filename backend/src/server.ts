@@ -5,7 +5,7 @@ import { logInfo, logError } from './utils/logger';
 // Validate environment variables
 validateEnv();
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // Start the server
 httpServer.listen(PORT, () => {
