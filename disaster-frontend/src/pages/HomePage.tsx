@@ -88,7 +88,7 @@ function HomePage() {
   // Use realtime data if available, otherwise fallback to API data
   const activeDisasters = realtimeActiveDisasters.length > 0
     ? realtimeActiveDisasters
-    : disasters?.filter(d => d.status === 'active') || [];
+    : disasters?.filter(d => d.status === 'reported' || d.status === 'verified' || d.status === 'in_progress') || [];
 
   const priorityAlerts = realtimePriorityAlerts.length > 0
     ? realtimePriorityAlerts

@@ -57,7 +57,7 @@ function EditDisasterPage() {
         description: disaster.description || '',
         location_name: disaster.location_name || '',
         severity: disaster.severity || 'medium',
-        status: (disaster.status === 'mitigated' ? 'monitoring' : disaster.status) || 'active',
+        status: disaster.status === 'resolved' ? 'resolved' : disaster.status === 'in_progress' ? 'monitoring' : 'active',
         tags: disaster.tags || []
       });
     }

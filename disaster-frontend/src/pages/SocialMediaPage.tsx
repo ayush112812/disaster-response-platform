@@ -1,10 +1,10 @@
-import { 
-  Title, 
-  Text, 
-  Container, 
-  Card, 
-  Group, 
-  Badge, 
+import {
+  Title,
+  Text,
+  Container,
+  Card,
+  Group,
+  Badge,
   Stack,
   Alert,
   LoadingOverlay,
@@ -12,23 +12,58 @@ import {
   Tooltip,
   TextInput,
   Button,
-  Grid
+  Grid,
+  Select,
+  Tabs
 } from '@mantine/core';
-import { 
-  IconBell, 
-  IconRefresh, 
+import {
+  IconBell,
+  IconRefresh,
   IconSearch,
   IconAlertTriangle,
   IconUsers,
-  IconClock
+  IconClock,
+  IconSos,
+  IconGift,
+  IconExclamationMark,
+  IconFilter
 } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
 import { getMockSocialMediaPosts } from '../services/api';
 import { useWebSocket } from '../hooks/useWebSocket';
 
+// Helper function to get post type icon
+const getPostTypeIcon = (type: string) => {
+  switch (type) {
+    case 'need':
+      return <IconSos size={14} />;
+    case 'offer':
+      return <IconGift size={14} />;
+    case 'alert':
+      return <IconExclamationMark size={14} />;
+    default:
+      return <IconUsers size={14} />;
+  }
+};
+
+// Helper function to get post type color
+const getPostTypeColor = (type: string) => {
+  switch (type) {
+    case 'need':
+      return 'red';
+    case 'offer':
+      return 'green';
+    case 'alert':
+      return 'orange';
+    default:
+      return 'gray';
+  }
+};
+
 function SocialMediaPage() {
   const [searchKeywords, setSearchKeywords] = useState('');
+  const [typeFilter, setTypeFilter] = useState<string | null>(null);
   const [realtimePosts, setRealtimePosts] = useState<any[]>([]);
   const { socket, connected } = useWebSocket();
 
@@ -87,9 +122,23 @@ function SocialMediaPage() {
   }, [socket]);
 
   // Use realtime data if available, otherwise fallback to API data
-  const allPosts = realtimePosts.length > 0 ? realtimePosts : socialMedia?.posts || [];
+  let allPosts = realtimePosts.length > 0 ? realtimePosts : socialMedia?.posts || [];
+
+  // Apply type filter if selected
+  if (typeFilter) {
+    allPosts = allPosts.filter(p => p.type === typeFilter);
+  }
+
   const priorityPosts = allPosts.filter(p => p.isPriority || p.isUrgent) || [];
   const regularPosts = allPosts.filter(p => !p.isPriority && !p.isUrgent) || [];
+
+  // Calculate type counts for statistics
+  const typeCounts = {
+    need: allPosts.filter(p => p.type === 'need').length,
+    offer: allPosts.filter(p => p.type === 'offer').length,
+    alert: allPosts.filter(p => p.type === 'alert').length,
+    general: allPosts.filter(p => p.type === 'general' || !p.type).length
+  };
 
   const handleSearch = () => {
     refetch();
@@ -121,33 +170,55 @@ function SocialMediaPage() {
 
       {/* Search and Controls */}
       <Card mb="xl">
-        <Group>
-          <TextInput
-            placeholder="Search by keywords (e.g., flood, emergency, help)"
-            value={searchKeywords}
-            onChange={(e) => setSearchKeywords(e.target.value)}
-            leftSection={<IconSearch size={16} />}
-            style={{ flex: 1 }}
-            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-          />
-          <Button 
-            onClick={handleSearch}
-            loading={isRefetching}
-            leftSection={<IconSearch size={16} />}
-          >
-            Search
-          </Button>
-          <Tooltip label="Refresh all posts">
-            <ActionIcon 
-              variant="light" 
-              size="lg"
-              onClick={() => refetch()}
-              loading={isLoading}
-            >
-              <IconRefresh size={18} />
-            </ActionIcon>
-          </Tooltip>
-        </Group>
+        <Grid>
+          <Grid.Col span={{ base: 12, md: 6 }}>
+            <TextInput
+              label="Search Keywords"
+              placeholder="Search by keywords (e.g., flood, emergency, help)"
+              value={searchKeywords}
+              onChange={(e) => setSearchKeywords(e.target.value)}
+              leftSection={<IconSearch size={16} />}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+            />
+          </Grid.Col>
+          <Grid.Col span={{ base: 12, md: 3 }}>
+            <Select
+              label="Post Type"
+              placeholder="All types"
+              value={typeFilter}
+              onChange={setTypeFilter}
+              leftSection={<IconFilter size={16} />}
+              data={[
+                { value: 'need', label: '🆘 Need Help' },
+                { value: 'offer', label: '✅ Offering Help' },
+                { value: 'alert', label: '⚠️ Alert/Warning' },
+                { value: 'general', label: '💬 General' }
+              ]}
+              clearable
+            />
+          </Grid.Col>
+          <Grid.Col span={{ base: 12, md: 3 }}>
+            <Group mt="xl">
+              <Button
+                onClick={handleSearch}
+                loading={isRefetching}
+                leftSection={<IconSearch size={16} />}
+              >
+                Search
+              </Button>
+              <Tooltip label="Refresh all posts">
+                <ActionIcon
+                  variant="light"
+                  size="lg"
+                  onClick={() => refetch()}
+                  loading={isLoading}
+                >
+                  <IconRefresh size={18} />
+                </ActionIcon>
+              </Tooltip>
+            </Group>
+          </Grid.Col>
+        </Grid>
       </Card>
 
       {isLoading && !isRefetching ? (
@@ -170,7 +241,7 @@ function SocialMediaPage() {
               {priorityPosts.length > 0 ? (
                 <Stack gap="md">
                   {priorityPosts.map((post) => (
-                    <Alert 
+                    <Alert
                       key={post.id}
                       icon={<IconBell size={16} />}
                       title={`@${post.username} • ${post.platform}`}
@@ -178,11 +249,22 @@ function SocialMediaPage() {
                       variant="light"
                     >
                       <Text size="sm" mb="xs">{post.text || post.content}</Text>
-                      {post.urgencyScore && (
-                        <Badge size="xs" color="red" mb="xs">
-                          Urgency: {post.urgencyScore}/6
-                        </Badge>
-                      )}
+                      <Group gap="xs" mb="xs">
+                        {post.type && (
+                          <Badge
+                            size="xs"
+                            color={getPostTypeColor(post.type)}
+                            leftSection={getPostTypeIcon(post.type)}
+                          >
+                            {post.type}
+                          </Badge>
+                        )}
+                        {post.urgencyScore && (
+                          <Badge size="xs" color="red">
+                            Urgency: {post.urgencyScore}/6
+                          </Badge>
+                        )}
+                      </Group>
                       <Group justify="space-between" gap="xs">
                         <Group gap="xs">
                           <IconUsers size={12} />
@@ -229,7 +311,7 @@ function SocialMediaPage() {
               {regularPosts.length > 0 ? (
                 <Stack gap="md">
                   {regularPosts.map((post) => (
-                    <Card 
+                    <Card
                       key={post.id}
                       withBorder
                       radius="sm"
@@ -237,9 +319,20 @@ function SocialMediaPage() {
                     >
                       <Group justify="space-between" mb="xs">
                         <Text fw={500} size="sm">@{post.username}</Text>
-                        <Badge size="xs" variant="light">
-                          {post.platform}
-                        </Badge>
+                        <Group gap="xs">
+                          {post.type && (
+                            <Badge
+                              size="xs"
+                              color={getPostTypeColor(post.type)}
+                              leftSection={getPostTypeIcon(post.type)}
+                            >
+                              {post.type}
+                            </Badge>
+                          )}
+                          <Badge size="xs" variant="light">
+                            {post.platform}
+                          </Badge>
+                        </Group>
                       </Group>
                       <Text size="sm" mb="xs">{post.text || post.content}</Text>
                       <Group justify="space-between" gap="xs">
@@ -280,28 +373,77 @@ function SocialMediaPage() {
       {allPosts.length > 0 && (
         <Card mt="xl">
           <Title order={4} mb="md">Statistics</Title>
-          <Group>
-            <div>
-              <Text size="xl" fw={700} c="red">{priorityPosts.length}</Text>
-              <Text size="sm" c="dimmed">Priority Alerts</Text>
-            </div>
-            <div>
-              <Text size="xl" fw={700} c="blue">{allPosts.length}</Text>
-              <Text size="sm" c="dimmed">Total Posts</Text>
-            </div>
-            <div>
-              <Text size="xl" fw={700} c="green">
-                {Math.round((priorityPosts.length / allPosts.length) * 100) || 0}%
-              </Text>
-              <Text size="sm" c="dimmed">Priority Rate</Text>
-            </div>
-            {connected && (
+          <Grid>
+            <Grid.Col span={{ base: 6, md: 3 }}>
               <div>
-                <Text size="xl" fw={700} c="green">Live</Text>
-                <Text size="sm" c="dimmed">Real-time Updates</Text>
+                <Text size="xl" fw={700} c="red">{priorityPosts.length}</Text>
+                <Text size="sm" c="dimmed">Priority Alerts</Text>
               </div>
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, md: 3 }}>
+              <div>
+                <Text size="xl" fw={700} c="blue">{allPosts.length}</Text>
+                <Text size="sm" c="dimmed">Total Posts</Text>
+              </div>
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, md: 3 }}>
+              <div>
+                <Text size="xl" fw={700} c="green">
+                  {Math.round((priorityPosts.length / allPosts.length) * 100) || 0}%
+                </Text>
+                <Text size="sm" c="dimmed">Priority Rate</Text>
+              </div>
+            </Grid.Col>
+            {connected && (
+              <Grid.Col span={{ base: 6, md: 3 }}>
+                <div>
+                  <Text size="xl" fw={700} c="green">Live</Text>
+                  <Text size="sm" c="dimmed">Real-time Updates</Text>
+                </div>
+              </Grid.Col>
             )}
-          </Group>
+          </Grid>
+
+          {/* Post Type Breakdown */}
+          <Title order={5} mt="xl" mb="md">Post Type Breakdown</Title>
+          <Grid>
+            <Grid.Col span={{ base: 6, md: 3 }}>
+              <Group gap="xs">
+                <IconSos size={16} color="red" />
+                <div>
+                  <Text size="lg" fw={700} c="red">{typeCounts.need}</Text>
+                  <Text size="sm" c="dimmed">Need Help</Text>
+                </div>
+              </Group>
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, md: 3 }}>
+              <Group gap="xs">
+                <IconGift size={16} color="green" />
+                <div>
+                  <Text size="lg" fw={700} c="green">{typeCounts.offer}</Text>
+                  <Text size="sm" c="dimmed">Offering Help</Text>
+                </div>
+              </Group>
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, md: 3 }}>
+              <Group gap="xs">
+                <IconExclamationMark size={16} color="orange" />
+                <div>
+                  <Text size="lg" fw={700} c="orange">{typeCounts.alert}</Text>
+                  <Text size="sm" c="dimmed">Alerts</Text>
+                </div>
+              </Group>
+            </Grid.Col>
+            <Grid.Col span={{ base: 6, md: 3 }}>
+              <Group gap="xs">
+                <IconUsers size={16} color="gray" />
+                <div>
+                  <Text size="lg" fw={700} c="gray">{typeCounts.general}</Text>
+                  <Text size="sm" c="dimmed">General</Text>
+                </div>
+              </Group>
+            </Grid.Col>
+          </Grid>
         </Card>
       )}
     </Container>

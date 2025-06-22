@@ -15,6 +15,18 @@ export default defineConfig({
         host: '0.0.0.0',
         strictPort: true,
         open: true,
+        proxy: {
+            '/api': {
+                target: 'http://localhost:5001',
+                changeOrigin: true,
+                secure: false,
+            },
+            '/socket.io': {
+                target: 'http://localhost:5001',
+                changeOrigin: true,
+                ws: true,
+            },
+        },
     },
     preview: {
         port: 3001,

@@ -83,7 +83,7 @@ function NewDisasterPage() {
     
     createDisasterMutation.mutate({
       ...formData,
-      status: 'active' as const,
+      status: 'reported' as const,
       owner_id: 'anonymous'
     });
   };

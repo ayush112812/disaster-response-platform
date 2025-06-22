@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { TextInput, Textarea, Button, Stack, Paper, Title, Text, Alert } from '@mantine/core';
+import { TextInput, Textarea, Button, Stack, Paper, Title, Text, Alert, Divider } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { IconAlertCircle } from '@tabler/icons-react';
+import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
 import { verifyImage } from '../services/api';
+import { ImageVerification } from './ImageVerification';
 
 interface ReportFormProps {
   disasterId: string;
@@ -16,36 +17,15 @@ export function ReportForm({ disasterId, onSuccess }: ReportFormProps) {
     content: '',
     image_url: ''
   });
-  const [verificationResult, setVerificationResult] = useState<{
-    isAuthentic?: boolean;
-    confidence?: number;
-    details?: string;
-  } | null>(null);
+  const [verificationResults, setVerificationResults] = useState<any[]>([]);
 
-  const verifyMutation = useMutation({
-    mutationFn: () => verifyImage(disasterId, formData.image_url),
-    onSuccess: (data) => {
-      setVerificationResult(data);
-    },
-    onError: (error) => {
-      notifications.show({
-        title: 'Verification Error',
-        message: error instanceof Error ? error.message : 'Failed to verify image',
-        color: 'red'
-      });
-    }
-  });
-
-  const handleVerifyImage = () => {
-    if (!formData.image_url) {
-      notifications.show({
-        title: 'Validation Error',
-        message: 'Please provide an image URL to verify',
-        color: 'red'
-      });
-      return;
-    }
-    verifyMutation.mutate();
+  const handleImageVerificationComplete = (result: any) => {
+    setVerificationResults(prev => [...prev, result]);
+    notifications.show({
+      title: 'Image Verification Added',
+      message: `Image ${result.isAuthentic ? 'verified' : 'flagged'} and added to report`,
+      color: result.isAuthentic ? 'green' : 'orange'
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -54,7 +34,7 @@ export function ReportForm({ disasterId, onSuccess }: ReportFormProps) {
     // For now, we'll just show a success notification
     notifications.show({
       title: 'Report Submitted',
-      message: 'Your report has been submitted successfully.',
+      message: `Your report has been submitted successfully${verificationResults.length > 0 ? ` with ${verificationResults.length} verified image(s)` : ''}.`,
       color: 'green'
     });
     onSuccess?.();
@@ -69,47 +49,38 @@ export function ReportForm({ disasterId, onSuccess }: ReportFormProps) {
             required
             label="Report Content"
             placeholder="Describe the situation or provide additional information"
-            minRows={3}
+            minRows={4}
             value={formData.content}
             onChange={(e) => setFormData({ ...formData, content: e.target.value })}
           />
-          <TextInput
-            label="Image URL"
-            placeholder="Enter URL of the image to verify"
-            value={formData.image_url}
-            onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-          />
-          
-          {formData.image_url && (
-            <Button
-              variant="light"
-              onClick={handleVerifyImage}
-              loading={verifyMutation.isPending}
-            >
-              Verify Image
-            </Button>
-          )}
 
-          {verificationResult && (
-            <Alert
-              icon={<IconAlertCircle size="1rem" />}
-              color={verificationResult.isAuthentic ? 'green' : 'red'}
-              title="Image Verification Result"
-            >
-              <Text>Authenticity: {verificationResult.isAuthentic ? 'Authentic' : 'Potentially Manipulated'}</Text>
-              {verificationResult.confidence && (
-                <Text>Confidence: {(verificationResult.confidence * 100).toFixed(1)}%</Text>
-              )}
-              {verificationResult.details && (
-                <Text size="sm" mt="xs">{verificationResult.details}</Text>
-              )}
+          <Divider my="md" />
+
+          <ImageVerification
+            disasterId={disasterId}
+            onVerificationComplete={handleImageVerificationComplete}
+            title="Verify Report Images"
+          />
+
+          {verificationResults.length > 0 && (
+            <Alert color="green" variant="light">
+              <Text size="sm" fw={500} mb="xs">
+                ✅ {verificationResults.length} image(s) verified for this report
+              </Text>
+              {verificationResults.map((result, index) => (
+                <Text key={index} size="xs" c="dimmed">
+                  • Image {index + 1}: {result.isAuthentic ? 'Authentic' : 'Flagged'}
+                  ({Math.round(result.confidence * 100)}% confidence)
+                </Text>
+              ))}
             </Alert>
           )}
 
           <Button
             type="submit"
             disabled={!formData.content}
-            mt="md"
+            size="md"
+            leftSection={<IconCheck size={16} />}
           >
             Submit Report
           </Button>

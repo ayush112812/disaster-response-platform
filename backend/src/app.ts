@@ -12,6 +12,7 @@ import { validate } from './middleware/validation';
 import config from './config';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
+import { realTimeDataAggregator } from './services/realTimeDataAggregator';
 
 // Load environment variables
 dotenv.config();
@@ -21,6 +22,10 @@ const httpServer = new HttpServer(app);
 
 // Initialize WebSocket server
 const io = initializeWebsocket(httpServer);
+
+// Initialize real-time data aggregator
+console.log('🔄 Initializing real-time data aggregator...');
+realTimeDataAggregator.startAggregation();
 
 // Middleware
 app.use(helmet());

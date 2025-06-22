@@ -8,6 +8,9 @@ import SocialMediaPage from './pages/SocialMediaPage';
 import ResourcesPage from './pages/ResourcesPage';
 import NewDisasterPage from './pages/NewDisasterPage';
 import NewReportPage from './pages/NewReportPage';
+import OfficialUpdatesPage from './pages/OfficialUpdatesPage';
+import RealTimeDashboard from './pages/RealTimeDashboard';
+
 
 function LayoutWrapper() {
   return (
@@ -28,6 +31,9 @@ function AppRoutes() {
         <Route path="disasters/:id/edit" element={<EditDisasterPage />} />
         <Route path="social-media" element={<SocialMediaPage />} />
         <Route path="resources" element={<ResourcesPage />} />
+        <Route path="official-updates" element={<OfficialUpdatesPage />} />
+        <Route path="realtime-dashboard" element={<RealTimeDashboard />} />
+
         <Route path="reports/new" element={<NewReportPage />} />
       </Route>
     </Routes>

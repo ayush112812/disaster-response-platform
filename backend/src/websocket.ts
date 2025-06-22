@@ -359,6 +359,14 @@ export function emitToDisaster(disasterId: string, event: string, data: any) {
   }
 }
 
+export function emitToAll(event: string, data: any) {
+  if (io) {
+    io.emit(event, data);
+  } else {
+    console.warn('Socket.io not initialized, cannot emit event:', event);
+  }
+}
+
 export function emitSocialMediaUpdate(disasterId: string, data: any) {
   emitToDisaster(disasterId, 'social_media_updated', data);
 }

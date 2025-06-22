@@ -12,13 +12,16 @@ export interface Disaster {
   description: string;
   location_name: string;
   location?: string; // PostGIS geography point
+  latitude?: number;
+  longitude?: number;
+  type?: string;
   severity: 'low' | 'medium' | 'high';
-  status: 'active' | 'resolved' | 'mitigated';
+  status: 'reported' | 'verified' | 'in_progress' | 'resolved' | 'false_alarm';
   tags: string[];
   owner_id: string;
   created_at: string;
   updated_at: string;
-  audit_trail?: any[];
+
 }
 
 export interface Resource {
@@ -57,17 +60,28 @@ export interface SocialMediaPost {
   mediaUrls?: string[];
   tags?: string[];
   isPriority?: boolean;
+  type?: 'need' | 'offer' | 'alert' | 'general';
+  content?: string; // Alternative field name used in backend
+  user?: string; // Alternative field name used in backend
+  isUrgent?: boolean; // Alternative field name used in backend
 }
 
 export interface OfficialUpdate {
   id: string;
+  disaster_id?: string;
   source: string;
   title: string;
-  content: string;
+  description?: string;
+  content?: string;
   url: string;
-  timestamp: string;
-  relevance: number;
+  published_at?: string;
+  timestamp?: string;
+  relevance?: number;
+  created_at?: string;
+  updated_at?: string;
 }
+
+
 
 export interface ApiError {
   message: string;
@@ -232,9 +246,33 @@ export const createResource = async (disasterId: string, data: Omit<Resource, 'i
 };
 
 // Social Media API functions
-export const getSocialMediaPosts = async (disasterId: string, limit?: number): Promise<{ posts: SocialMediaPost[]; total: number; priorityCount: number }> => {
+export const getSocialMediaPosts = async (
+  disasterId: string,
+  options?: {
+    limit?: number;
+    type?: 'need' | 'offer' | 'alert' | 'general';
+    urgent?: boolean;
+    keywords?: string[];
+  }
+): Promise<{
+  posts: SocialMediaPost[];
+  total: number;
+  priorityCount: number;
+  typeCounts?: {
+    need: number;
+    offer: number;
+    alert: number;
+    general: number;
+  };
+}> => {
+  const params: Record<string, any> = {};
+  if (options?.limit) params.limit = options.limit;
+  if (options?.type) params.type = options.type;
+  if (options?.urgent !== undefined) params.urgent = options.urgent;
+  if (options?.keywords?.length) params.keywords = options.keywords.join(',');
+
   const response = await api.get(`/social-media/disasters/${disasterId}/social-media`, {
-    params: { limit }
+    params
   });
   return response.data;
 };
@@ -274,7 +312,7 @@ export const getNearbyDisasters = async (lat: number, lng: number, radius?: numb
 };
 
 export const getNearbyResources = async (lat: number, lng: number, radius?: number, type?: string): Promise<{ resources: Resource[]; count: number }> => {
-  const response = await api.get('/geospatial/resources/nearby', {
+  const response = await api.get('/resources', {
     params: { lat, lng, radius, type }
   });
   return response.data;
@@ -285,3 +323,5 @@ export const verifyImage = async (disasterId: string, imageUrl: string): Promise
   const response = await api.post(`/disasters/${disasterId}/verify-image`, { imageUrl });
   return response.data;
 };
+
+

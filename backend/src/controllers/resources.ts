@@ -27,7 +27,12 @@ export const getResources = async (req: Request, res: Response) => {
     const { data: resources, error } = await query;
 
     if (error) throw error;
-    res.json(resources);
+
+    // Return in the format expected by frontend
+    res.json({
+      resources: resources || [],
+      count: resources?.length || 0
+    });
   } catch (error) {
     console.error('Error fetching resources:', error);
     res.status(500).json({ error: 'Failed to fetch resources' });

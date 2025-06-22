@@ -3,7 +3,7 @@ import { validationResult, ValidationChain } from 'express-validator';
 import { AppError } from './error';
 
 export const validate = (validations?: ValidationChain[]) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     // If validations are provided, run them first
     if (validations) {
       await Promise.all(validations.map(validation => validation.run(req)));

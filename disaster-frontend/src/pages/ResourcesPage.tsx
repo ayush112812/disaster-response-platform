@@ -1,10 +1,10 @@
-import { 
-  Title, 
-  Text, 
-  Container, 
-  Card, 
-  Group, 
-  Badge, 
+import {
+  Title,
+  Text,
+  Container,
+  Card,
+  Group,
+  Badge,
   Stack,
   LoadingOverlay,
   ActionIcon,
@@ -13,21 +13,30 @@ import {
   Button,
   Grid,
   Select,
-  NumberInput
+  NumberInput,
+  Alert,
+  Tabs,
+  Paper
 } from '@mantine/core';
-import { 
-  IconMapPin, 
-  IconRefresh, 
+import {
+  IconMapPin,
+  IconRefresh,
   IconSearch,
   IconMedicalCross,
   IconHome,
   IconDroplet,
   IconBread,
   IconShirt,
-  IconTool
+  IconTool,
+  IconCurrentLocation,
+  IconMap,
+  IconList
 } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getNearbyResources, geocodeLocation, Resource } from '../services/api';
+import { useWebSocket } from '../hooks/useWebSocket';
+import { InteractiveMap } from '../components/InteractiveMap';
 
 // Mock resources data
 const mockResources = [
@@ -115,44 +124,148 @@ function ResourcesPage() {
   const [searchLocation, setSearchLocation] = useState('');
   const [resourceType, setResourceType] = useState<string | null>(null);
   const [radius, setRadius] = useState<number>(10);
-  const [isLoading, setIsLoading] = useState(false);
-  
-  const [filteredResources, setFilteredResources] = useState(mockResources);
+  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  const [activeTab, setActiveTab] = useState<string>('list');
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const { socket, connected } = useWebSocket();
 
-  const handleSearch = () => {
-    setIsLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      let filtered = [...mockResources];
-      
-      if (searchLocation) {
-        filtered = filtered.filter(resource => 
-          resource.location_name.toLowerCase().includes(searchLocation.toLowerCase())
-        );
+  // Get user's current location
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const userCoords = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          setUserLocation(userCoords);
+          setCoordinates(userCoords);
+        },
+        (error) => {
+          console.log('Geolocation error:', error);
+          // Default to NYC if geolocation fails
+          const defaultCoords = { lat: 40.7128, lng: -74.0060 };
+          setCoordinates(defaultCoords);
+        }
+      );
+    } else {
+      // Default to NYC if geolocation not supported
+      const defaultCoords = { lat: 40.7128, lng: -74.0060 };
+      setCoordinates(defaultCoords);
+    }
+  }, []);
+
+  // Real-time resources query with fallback to mock data
+  const {
+    data: resourcesData,
+    isLoading,
+    refetch,
+    isRefetching
+  } = useQuery({
+    queryKey: ['nearby-resources', coordinates?.lat, coordinates?.lng, radius, resourceType],
+    queryFn: async () => {
+      if (!coordinates) return Promise.resolve({ resources: [], count: 0 });
+
+      try {
+        // Try to get real data from API
+        return await getNearbyResources(coordinates.lat, coordinates.lng, radius, resourceType || undefined);
+      } catch (error) {
+        console.log('API failed, using mock data:', error);
+        // Fallback to mock data
+        let filteredResources = [...mockResources];
+
+        // Apply type filter if specified
+        if (resourceType) {
+          filteredResources = filteredResources.filter(r => r.type === resourceType);
+        }
+
+        // Add coordinates for map display
+        filteredResources = filteredResources.map((resource, index) => ({
+          ...resource,
+          coordinates: {
+            lat: coordinates.lat + (Math.random() - 0.5) * 0.02,
+            lng: coordinates.lng + (Math.random() - 0.5) * 0.02
+          },
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }));
+
+        return { resources: filteredResources, count: filteredResources.length };
       }
-      
-      if (resourceType) {
-        filtered = filtered.filter(resource => resource.type === resourceType);
-      }
-      
-      // Filter by radius
-      filtered = filtered.filter(resource => resource.distance <= radius);
-      
-      // Sort by distance
-      filtered.sort((a, b) => a.distance - b.distance);
-      
-      setFilteredResources(filtered);
-      setIsLoading(false);
-    }, 500);
+    },
+    enabled: !!coordinates,
+    retry: 1,
+  });
+
+  // WebSocket listeners for real-time resource updates
+  useEffect(() => {
+    if (!socket) return;
+
+    console.log('🔌 Setting up WebSocket listeners for resources');
+
+    socket.on('resource_updated', (data: any) => {
+      console.log('🏠 Resource updated:', data);
+      refetch();
+    });
+
+    socket.on('resources_updated', (data: any) => {
+      console.log('🏠 Resources updated:', data);
+      refetch();
+    });
+
+    return () => {
+      socket.off('resource_updated');
+      socket.off('resources_updated');
+    };
+  }, [socket, refetch]);
+
+  const handleSearch = async () => {
+    if (!searchLocation.trim()) {
+      refetch();
+      return;
+    }
+
+    try {
+      const result = await geocodeLocation(searchLocation);
+      setCoordinates(result.coordinates);
+    } catch (error) {
+      console.error('Geocoding failed:', error);
+      // Keep current coordinates if geocoding fails
+    }
+  };
+
+  const handleUseCurrentLocation = () => {
+    if (userLocation) {
+      setCoordinates(userLocation);
+      setSearchLocation('Current Location');
+    } else if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const coords = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          setUserLocation(coords);
+          setCoordinates(coords);
+          setSearchLocation('Current Location');
+        },
+        (error) => {
+          console.error('Geolocation error:', error);
+        }
+      );
+    }
   };
 
   const handleReset = () => {
     setSearchLocation('');
     setResourceType(null);
     setRadius(10);
-    setFilteredResources(mockResources);
+    if (userLocation) {
+      setCoordinates(userLocation);
+    }
   };
+
+  const resources = resourcesData?.resources || [];
 
   return (
     <Container size="xl" py="xl">
@@ -163,10 +276,25 @@ function ResourcesPage() {
             Find emergency resources and assistance near you
           </Text>
         </div>
-        <Badge color="blue" variant="filled" size="lg">
-          {filteredResources.length} Resources Found
-        </Badge>
+        <Group>
+          <Badge color="blue" variant="filled" size="lg">
+            {resources.length} Resources Found
+          </Badge>
+          {connected && (
+            <Badge color="green" variant="light" size="sm">
+              Live Updates
+            </Badge>
+          )}
+        </Group>
       </Group>
+
+      {coordinates && (
+        <Alert color="blue" variant="light" mb="xl">
+          📍 Searching near: {coordinates.lat.toFixed(4)}, {coordinates.lng.toFixed(4)}
+          {userLocation && coordinates.lat === userLocation.lat && coordinates.lng === userLocation.lng &&
+            " (Your current location)"}
+        </Alert>
+      )}
 
       {/* Search and Filters */}
       <Card mb="xl">
@@ -179,6 +307,7 @@ function ResourcesPage() {
               value={searchLocation}
               onChange={(e) => setSearchLocation(e.target.value)}
               leftSection={<IconMapPin size={16} />}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
             />
           </Grid.Col>
           <Grid.Col span={{ base: 12, md: 3 }}>
@@ -209,14 +338,23 @@ function ResourcesPage() {
           </Grid.Col>
           <Grid.Col span={{ base: 12, md: 3 }}>
             <Group mt="xl">
-              <Button 
+              <Button
                 onClick={handleSearch}
-                loading={isLoading}
+                loading={isRefetching}
                 leftSection={<IconSearch size={16} />}
               >
                 Search
               </Button>
-              <Button 
+              <Tooltip label="Use your current location">
+                <ActionIcon
+                  variant="light"
+                  size="lg"
+                  onClick={handleUseCurrentLocation}
+                >
+                  <IconCurrentLocation size={18} />
+                </ActionIcon>
+              </Tooltip>
+              <Button
                 variant="light"
                 onClick={handleReset}
               >
@@ -227,87 +365,151 @@ function ResourcesPage() {
         </Grid>
       </Card>
 
-      {/* Resources List */}
-      {isLoading ? (
-        <div style={{ position: 'relative', minHeight: 200 }}>
-          <LoadingOverlay visible />
-        </div>
-      ) : (
-        <Stack gap="md">
-          {filteredResources.map((resource) => {
-            const IconComponent = resourceTypeIcons[resource.type as keyof typeof resourceTypeIcons];
-            const color = resourceTypeColors[resource.type as keyof typeof resourceTypeColors];
-            
-            return (
-              <Card key={resource.id} withBorder radius="md" p="lg">
-                <Group justify="space-between" mb="md">
-                  <Group>
-                    <IconComponent size={24} color={color} />
-                    <div>
-                      <Text fw={600} size="lg">{resource.name}</Text>
-                      <Text size="sm" c="dimmed">{resource.location_name}</Text>
-                    </div>
-                  </Group>
-                  <Group>
-                    <Badge color={color} variant="light">
-                      {resource.type}
-                    </Badge>
-                    <Badge color="gray" variant="outline">
-                      {resource.distance} km away
-                    </Badge>
-                  </Group>
-                </Group>
-                
-                <Text mb="md">{resource.description}</Text>
-                
-                <Group justify="space-between">
-                  <Group>
-                    <Text size="sm" fw={500}>
-                      Capacity: {resource.quantity}
-                    </Text>
-                    <Text size="sm" c="dimmed">
-                      Managed by: {resource.created_by}
-                    </Text>
-                  </Group>
-                  <Group>
-                    {resource.contact_info?.phone && (
-                      <Button 
-                        size="sm" 
-                        variant="light"
-                        component="a"
-                        href={`tel:${resource.contact_info.phone}`}
-                      >
-                        Call: {resource.contact_info.phone}
-                      </Button>
-                    )}
-                    {resource.contact_info?.email && (
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        component="a"
-                        href={`mailto:${resource.contact_info.email}`}
-                      >
-                        Email
-                      </Button>
-                    )}
-                  </Group>
-                </Group>
-              </Card>
-            );
-          })}
-          
-          {filteredResources.length === 0 && (
-            <Card withBorder radius="md" p="xl">
-              <Text ta="center" c="dimmed" size="lg" mb="md">
-                No resources found
-              </Text>
-              <Text ta="center" c="dimmed" size="sm">
-                Try adjusting your search criteria or expanding the search radius.
-              </Text>
-            </Card>
+      {/* Tabbed Interface */}
+      <Tabs value={activeTab} onChange={setActiveTab}>
+        <Tabs.List>
+          <Tabs.Tab value="list" leftSection={<IconList size={16} />}>
+            List View
+          </Tabs.Tab>
+          <Tabs.Tab value="map" leftSection={<IconMap size={16} />}>
+            Map View
+          </Tabs.Tab>
+        </Tabs.List>
+
+        <Tabs.Panel value="list">
+
+          {/* Resources List */}
+          {isLoading ? (
+            <div style={{ position: 'relative', minHeight: 200 }}>
+              <LoadingOverlay visible />
+            </div>
+          ) : (
+            <Stack gap="md" mt="md">
+              {resources.map((resource) => {
+                const IconComponent = resourceTypeIcons[resource.type as keyof typeof resourceTypeIcons];
+                const color = resourceTypeColors[resource.type as keyof typeof resourceTypeColors];
+
+                return (
+                  <Card key={resource.id} withBorder radius="md" p="lg">
+                    <Group justify="space-between" mb="md">
+                      <Group>
+                        <IconComponent size={24} color={color} />
+                        <div>
+                          <Text fw={600} size="lg">{resource.name}</Text>
+                          <Text size="sm" c="dimmed">{resource.location_name}</Text>
+                        </div>
+                      </Group>
+                      <Group>
+                        <Badge color={color} variant="light">
+                          {resource.type}
+                        </Badge>
+                        {coordinates && (
+                          <Badge color="gray" variant="outline">
+                            📍 Nearby
+                          </Badge>
+                        )}
+                      </Group>
+                    </Group>
+
+                    <Text mb="md">{resource.description}</Text>
+
+                    <Group justify="space-between">
+                      <Group>
+                        <Text size="sm" fw={500}>
+                          Capacity: {resource.quantity}
+                        </Text>
+                        <Text size="sm" c="dimmed">
+                          Managed by: {resource.created_by}
+                        </Text>
+                      </Group>
+                      <Group>
+                        {resource.contact_info?.phone && (
+                          <Button
+                            size="sm"
+                            variant="light"
+                            component="a"
+                            href={`tel:${resource.contact_info.phone}`}
+                          >
+                            Call: {resource.contact_info.phone}
+                          </Button>
+                        )}
+                        {resource.contact_info?.email && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            component="a"
+                            href={`mailto:${resource.contact_info.email}`}
+                          >
+                            Email
+                          </Button>
+                        )}
+                      </Group>
+                    </Group>
+                  </Card>
+                );
+              })}
+
+              {resources.length === 0 && !isLoading && (
+                <Card withBorder radius="md" p="xl">
+                  <Text ta="center" c="dimmed" size="lg" mb="md">
+                    No resources found
+                  </Text>
+                  <Text ta="center" c="dimmed" size="sm">
+                    Try adjusting your search criteria or expanding the search radius.
+                  </Text>
+                </Card>
+              )}
+            </Stack>
           )}
-        </Stack>
-      )}
+        </Tabs.Panel>
+
+        <Tabs.Panel value="map">
+          <div style={{ marginTop: '1rem' }}>
+            {coordinates && (
+              <Alert color="blue" variant="light" mb="md">
+                <Text size="sm">
+                  <strong>Search center:</strong> {coordinates.lat.toFixed(4)}, {coordinates.lng.toFixed(4)}
+                  {userLocation && coordinates.lat === userLocation.lat && coordinates.lng === userLocation.lng &&
+                    " (Your current location)"}
+                  <br />
+                  <strong>Search radius:</strong> {radius} km
+                  <br />
+                  <strong>Resources found:</strong> {resources.length}
+                </Text>
+              </Alert>
+            )}
+
+            {coordinates ? (
+              <InteractiveMap
+                resources={resources.map(resource => ({
+                  ...resource,
+                  coordinates: resource.coordinates || {
+                    // Generate mock coordinates near the search center for demo
+                    lat: (coordinates?.lat || 40.7128) + (Math.random() - 0.5) * 0.02,
+                    lng: (coordinates?.lng || -74.0060) + (Math.random() - 0.5) * 0.02
+                  }
+                }))}
+                center={[coordinates.lat, coordinates.lng]}
+                zoom={12}
+                radius={radius * 1000} // Convert km to meters
+                height={500}
+                showUserLocation={true}
+                onLocationChange={(lat, lng) => {
+                  console.log('Map center changed:', lat, lng);
+                  // Could update search center here if needed
+                }}
+              />
+            ) : (
+              <Paper withBorder style={{ height: 500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Stack align="center" gap="md">
+                  <Text c="dimmed" fw={500}>Loading map...</Text>
+                  <Text size="sm" c="dimmed">Getting your location</Text>
+                </Stack>
+              </Paper>
+            )}
+          </div>
+        </Tabs.Panel>
+      </Tabs>
     </Container>
   );
 }

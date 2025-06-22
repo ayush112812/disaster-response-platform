@@ -30,6 +30,8 @@ export interface OfficialUpdate {
   published_at: string;
   created_at?: string;
   updated_at?: string;
+  disasterRelevance?: number;
+  date?: string;
 }
 
 export interface OfficialUpdateFilters {
@@ -203,26 +205,38 @@ function calculateRelevance(disasterTitle: string, updateTitle: string, tags: st
 }
 
 // Fallback mock data
-function getMockOfficialUpdates(disasterId: string) {
+function getMockOfficialUpdates(disasterId: string): OfficialUpdate[] {
   return [
     {
+      id: '1',
+      disaster_id: disasterId,
       source: 'FEMA',
       title: 'Federal Disaster Declaration for Recent Flooding',
+      description: 'Federal emergency declaration has been issued for the affected region.',
       url: 'https://www.fema.gov/disaster/example',
+      published_at: new Date().toISOString(),
       date: new Date().toISOString().split('T')[0],
       disasterRelevance: 5
     },
     {
+      id: '2',
+      disaster_id: disasterId,
       source: 'Red Cross',
       title: 'Emergency Shelters Open for Flood Victims',
+      description: 'Multiple emergency shelters have been opened to assist flood victims.',
       url: 'https://www.redcross.org/example',
+      published_at: new Date().toISOString(),
       date: new Date().toISOString().split('T')[0],
       disasterRelevance: 4
     },
     {
+      id: '3',
+      disaster_id: disasterId,
       source: 'Local Government',
       title: 'Emergency Response Plan Activated',
+      description: 'Local emergency response plan has been activated in response to the disaster.',
       url: 'https://www.nyc.gov/example',
+      published_at: new Date().toISOString(),
       date: new Date().toISOString().split('T')[0],
       disasterRelevance: 3
     }

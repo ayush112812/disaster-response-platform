@@ -1,5 +1,5 @@
-import { Group, Title, Anchor, Badge, Button } from '@mantine/core';
-import { IconAlertTriangle, IconBell, IconHome, IconMapPin } from '@tabler/icons-react';
+import { Group, Title, Badge, Button } from '@mantine/core';
+import { IconAlertTriangle, IconBell, IconHome, IconMapPin, IconNews, IconActivity } from '@tabler/icons-react';
 import { Link, useLocation } from 'react-router-dom';
 
 function Navbar() {
@@ -54,6 +54,29 @@ function Navbar() {
           size="sm"
         >
           Resources
+        </Button>
+        <Button
+          component={Link}
+          to="/official-updates"
+          variant={isActive('/official-updates') ? 'filled' : 'subtle'}
+          leftSection={<IconNews size={16} />}
+          size="sm"
+        >
+          Official Updates
+        </Button>
+        <Button
+          component={Link}
+          to="/realtime-dashboard"
+          variant={isActive('/realtime-dashboard') ? 'filled' : 'subtle'}
+          leftSection={<IconActivity size={16} />}
+          size="sm"
+          rightSection={
+            <Badge size="xs" color="red" variant="filled">
+              Live
+            </Badge>
+          }
+        >
+          Real-Time
         </Button>
       </Group>
     </Group>

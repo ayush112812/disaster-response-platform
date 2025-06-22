@@ -7,6 +7,7 @@ import updateRoutes from './updates';
 import geocodingRoutes from './geocoding';
 import socialMediaRoutes from './socialMedia';
 import officialUpdatesRoutes from './officialUpdates';
+import realtimeRoutes from './realtime';
 // import geospatialRoutes from './geospatial';
 
 const router = Router();
@@ -40,6 +41,7 @@ router.use('/updates', updateRoutes);
 router.use('/geocoding', geocodingRoutes);
 router.use('/social-media', socialMediaRoutes);
 router.use('/official-updates', officialUpdatesRoutes);
+router.use('/realtime', realtimeRoutes);
 // router.use('/geospatial', geospatialRoutes);
 
 // Health check endpoint

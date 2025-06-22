@@ -84,11 +84,13 @@ router.get('/:id', [
   validate()
 ], getDisasterById);
 
+// Allow disaster creation without authentication for demo purposes
+router.post('/', validate(disasterValidation), createDisaster);
+
 // Protected routes (require authentication)
 router.use(authenticateToken);
 
-// Disaster CRUD operations
-router.post('/', validate(disasterValidation), createDisaster);
+// Disaster CRUD operations (update/delete require auth)
 
 router.put('/:id', [
   param('id').isString().isLength({ min: 1 }).withMessage('Invalid disaster ID'),

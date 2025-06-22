@@ -3,6 +3,12 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 import './index.css';
 
+// Set a mock token for demo purposes if none exists
+if (!localStorage.getItem('token')) {
+  localStorage.setItem('token', 'demo-token-for-testing');
+  console.log('🔑 Set demo token for API testing');
+}
+
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
   constructor(props: { children: React.ReactNode }) {
     super(props);

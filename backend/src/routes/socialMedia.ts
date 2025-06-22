@@ -11,22 +11,30 @@ router.get('/disasters/:id/social-media', [
   authenticateToken,
   param('id').isString().isLength({ min: 1 }).withMessage('Invalid disaster ID'),
   query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Limit must be between 1 and 50'),
+  query('type').optional().isIn(['need', 'offer', 'alert', 'general']).withMessage('Invalid post type'),
+  query('urgent').optional().isBoolean().withMessage('Urgent must be boolean'),
   validate()
 ], async (req, res) => {
   try {
     const { id } = req.params;
     const limit = parseInt(req.query.limit as string) || 10;
-    
-    const posts = await getSocialMediaPosts(id);
-    
-    // Limit the results
-    const limitedPosts = posts.slice(0, limit);
-    
+    const type = req.query.type as 'need' | 'offer' | 'alert' | 'general' | undefined;
+    const isUrgent = req.query.urgent === 'true' ? true : req.query.urgent === 'false' ? false : undefined;
+    const keywords = req.query.keywords ? (req.query.keywords as string).split(',') : [];
+
+    const result = await getSocialMediaPosts(id, {
+      limit,
+      type,
+      isUrgent,
+      keywords
+    });
+
     res.json({
       disasterId: id,
-      posts: limitedPosts,
-      total: posts.length,
-      priorityCount: posts.filter(post => post.isPriority).length
+      posts: result.data,
+      total: result.total,
+      priorityCount: result.data.filter(post => post.isUrgent).length,
+      typeCounts: result.typeCounts
     });
   } catch (error) {
     console.error('Error fetching social media posts:', error);
@@ -54,7 +62,8 @@ router.get('/mock-social-media', [
         timestamp: new Date().toISOString(),
         location: 'Downtown',
         tags: ['floodrelief', 'emergency'],
-        isPriority: true
+        isPriority: true,
+        type: 'need'
       },
       {
         id: 'mock-2',
@@ -64,7 +73,8 @@ router.get('/mock-social-media', [
         timestamp: new Date().toISOString(),
         location: 'Uptown',
         tags: ['floodrelief', 'help'],
-        isPriority: false
+        isPriority: false,
+        type: 'offer'
       },
       {
         id: 'mock-3',
@@ -74,7 +84,8 @@ router.get('/mock-social-media', [
         timestamp: new Date().toISOString(),
         location: 'Main Street',
         tags: ['traffic', 'flooding'],
-        isPriority: false
+        isPriority: false,
+        type: 'alert'
       }
     ];
     
