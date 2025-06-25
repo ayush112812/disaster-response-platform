@@ -10,6 +10,10 @@ import NewDisasterPage from './pages/NewDisasterPage';
 import NewReportPage from './pages/NewReportPage';
 import OfficialUpdatesPage from './pages/OfficialUpdatesPage';
 import RealTimeDashboard from './pages/RealTimeDashboard';
+import DataIngestionPage from './pages/DataIngestionPage';
+import Geocoding from './pages/Geocoding';
+import DisasterDetails from './pages/DisasterDetails';
+import FeatureTestPage from './pages/FeatureTestPage';
 
 
 function LayoutWrapper() {
@@ -33,6 +37,9 @@ function AppRoutes() {
         <Route path="resources" element={<ResourcesPage />} />
         <Route path="official-updates" element={<OfficialUpdatesPage />} />
         <Route path="realtime-dashboard" element={<RealTimeDashboard />} />
+        <Route path="data-ingestion" element={<DataIngestionPage />} />
+        <Route path="geocoding" element={<Geocoding />} />
+        <Route path="test-features" element={<FeatureTestPage />} />
 
         <Route path="reports/new" element={<NewReportPage />} />
       </Route>

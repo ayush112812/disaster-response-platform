@@ -6,6 +6,15 @@ export interface Coordinates {
   lng: number;
 }
 
+export interface AuditTrailEntry {
+  action: 'create' | 'update' | 'delete';
+  user_id: string;
+  timestamp: string;
+  details?: string;
+  changes?: string[];
+  final_state?: any;
+}
+
 export interface Disaster {
   id: string;
   title: string;
@@ -21,7 +30,7 @@ export interface Disaster {
   owner_id: string;
   created_at: string;
   updated_at: string;
-
+  audit_trail?: AuditTrailEntry[];
 }
 
 export interface Resource {
@@ -114,8 +123,10 @@ export const api = axios.create({
 // Request interceptor for adding auth token if available
 api.interceptors.request.use(
   (config) => {
+    // Don't use localStorage token as it might be malformed
+    // Instead rely on x-user header for demo purposes
     const token = localStorage.getItem('token');
-    if (token) {
+    if (token && token !== 'demo-token') {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -274,7 +285,36 @@ export const updateDisaster = async (id: string, data: Partial<Disaster>): Promi
 };
 
 export const deleteDisaster = async (id: string): Promise<void> => {
-  await api.delete(`/disasters/${id}`);
+  console.log('🗑️ Deleting disaster:', id);
+  try {
+    const response = await api.delete(`/disasters/${id}`, {
+      headers: {
+        'x-user': 'reliefAdmin' // Use admin user for delete operations
+      },
+      validateStatus: function (status) {
+        // Accept 204 (No Content) and 404 (Not Found) as success
+        return status === 204 || status === 404 || (status >= 200 && status < 300);
+      }
+    });
+    console.log('✅ Disaster deleted successfully:', response.status);
+
+    // Handle different success scenarios
+    if (response.status === 204) {
+      console.log('✅ Disaster deleted (204 No Content)');
+    } else if (response.status === 404) {
+      console.log('✅ Disaster was already deleted (404 Not Found)');
+    }
+  } catch (error: any) {
+    console.error('❌ Error deleting disaster:', error);
+    // Re-throw the error with more details
+    if (error.response) {
+      throw new Error(`Delete failed: ${error.response.data?.error || error.response.statusText}`);
+    } else if (error.request) {
+      throw new Error('No response from server. Please check your connection.');
+    } else {
+      throw new Error(`Delete failed: ${error.message}`);
+    }
+  }
 };
 
 // Add authentication related API calls

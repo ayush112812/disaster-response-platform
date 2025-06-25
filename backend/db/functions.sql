@@ -1,39 +1,104 @@
--- Function to find resources near a point
+-- Enable PostGIS extension
+CREATE EXTENSION IF NOT EXISTS postgis;
+
+-- Function to find resources near a point using proper PostGIS
 CREATE OR REPLACE FUNCTION find_nearby_resources(
-  lat float8,
-  lng float8,
-  radius_meters integer DEFAULT 10000
-) 
+  target_lat float8,
+  target_lng float8,
+  radius_meters integer DEFAULT 10000,
+  resource_type text DEFAULT NULL
+)
 RETURNS TABLE (
   id uuid,
   name text,
   type text,
   location_name text,
   disaster_id uuid,
-  distance_meters float8
-) 
-LANGUAGE sql 
+  distance_meters float8,
+  latitude float8,
+  longitude float8,
+  description text,
+  quantity integer,
+  status text
+)
+LANGUAGE sql
 AS $$
-  SELECT 
+  SELECT
     r.id,
     r.name,
     r.type,
     r.location_name,
     r.disaster_id,
     ST_Distance(
-      r.location::geography,
-      ST_SetSRID(ST_MakePoint(lng, lat), 4326)::geography
-    ) as distance_meters
-  FROM 
+      ST_SetSRID(ST_MakePoint(r.longitude, r.latitude), 4326)::geography,
+      ST_SetSRID(ST_MakePoint(target_lng, target_lat), 4326)::geography
+    ) as distance_meters,
+    r.latitude,
+    r.longitude,
+    r.description,
+    r.quantity,
+    r.status
+  FROM
     resources r
-  WHERE 
+  WHERE
     ST_DWithin(
-      r.location::geography,
-      ST_SetSRID(ST_MakePoint(lng, lat), 4326)::geography,
+      ST_SetSRID(ST_MakePoint(r.longitude, r.latitude), 4326)::geography,
+      ST_SetSRID(ST_MakePoint(target_lng, target_lat), 4326)::geography,
       radius_meters
     )
-  ORDER BY 
-    distance_meters ASC;
+    AND (resource_type IS NULL OR r.type = resource_type)
+    AND r.status = 'available'
+  ORDER BY
+    distance_meters ASC
+  LIMIT 50;
+$$;
+
+-- Function to find disasters near a point
+CREATE OR REPLACE FUNCTION find_nearby_disasters(
+  target_lat float8,
+  target_lng float8,
+  radius_meters integer DEFAULT 50000
+)
+RETURNS TABLE (
+  id uuid,
+  title text,
+  description text,
+  disaster_type text,
+  severity text,
+  status text,
+  location_name text,
+  distance_meters float8,
+  latitude float8,
+  longitude float8
+)
+LANGUAGE sql
+AS $$
+  SELECT
+    d.id,
+    d.title,
+    d.description,
+    d.disaster_type,
+    d.severity,
+    d.status,
+    d.location_name,
+    ST_Distance(
+      ST_SetSRID(ST_MakePoint(d.longitude, d.latitude), 4326)::geography,
+      ST_SetSRID(ST_MakePoint(target_lng, target_lat), 4326)::geography
+    ) as distance_meters,
+    d.latitude,
+    d.longitude
+  FROM
+    disasters d
+  WHERE
+    ST_DWithin(
+      ST_SetSRID(ST_MakePoint(d.longitude, d.latitude), 4326)::geography,
+      ST_SetSRID(ST_MakePoint(target_lng, target_lat), 4326)::geography,
+      radius_meters
+    )
+    AND d.status = 'active'
+  ORDER BY
+    distance_meters ASC
+  LIMIT 20;
 $$;
 
 -- Function to find disasters near a point

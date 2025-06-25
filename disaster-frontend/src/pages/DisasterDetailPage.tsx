@@ -25,7 +25,7 @@ import { IconAlertCircle, IconArrowLeft, IconMapPin,
   IconCalendar, IconCalendarDue,
   IconInfoCircle, IconAlertTriangle, IconUsers, IconBell,
   IconMedicalCross, IconHome, IconDroplet, IconBread,
-  IconRefresh, IconExternalLink, IconHistory, IconPhoto } from '@tabler/icons-react';
+  IconRefresh, IconExternalLink, IconHistory, IconPhoto, IconX } from '@tabler/icons-react';
 import { getDisaster, Disaster, ApiError, getSocialMediaPosts, getOfficialUpdates,
   getNearbyResources, SocialMediaPost, OfficialUpdate, Resource } from '../services/api';
 import { useWebSocket } from '../hooks/useWebSocket';
@@ -35,11 +35,16 @@ const severityColors = {
   low: 'blue',
   medium: 'yellow',
   high: 'red',
+  critical: 'red',
 } as const;
 
 const statusColors = {
-  active: 'red',
+  reported: 'blue',
+  verified: 'orange',
+  in_progress: 'yellow',
   resolved: 'green',
+  false_alarm: 'gray',
+  active: 'red',
   mitigated: 'yellow',
 } as const;
 
@@ -58,6 +63,9 @@ function DisasterDetailPage() {
   const [activeTab, setActiveTab] = useState<string>('overview');
   const [realtimeSocialMedia, setRealtimeSocialMedia] = useState<SocialMediaPost[]>([]);
   const { socket, connected } = useWebSocket();
+
+  // Add error boundary logging
+  console.log('🔍 DisasterDetailPage rendering with ID:', id);
 
   const {
     data: disaster,
@@ -220,7 +228,12 @@ function DisasterDetailPage() {
     ? realtimeSocialMedia
     : socialMediaData?.posts || [];
 
-  return (
+  // Add error logging for disaster data
+  console.log('🔍 Disaster data:', disaster);
+  console.log('🔍 Audit trail:', disaster?.audit_trail);
+
+  try {
+    return (
     <Container size="xl" py="xl">
       <Button
         component={Link}
@@ -238,19 +251,19 @@ function DisasterDetailPage() {
             <Title order={2} mb="sm">{disaster.title}</Title>
             <Group mb="xs">
               <Badge
-                color={severityColors[disaster.severity as keyof typeof severityColors]}
+                color={severityColors[disaster.severity as keyof typeof severityColors] || 'gray'}
                 size="lg"
                 variant="light"
                 leftSection={<IconAlertTriangle size={14} style={{ marginRight: 4 }} />}
               >
-                {disaster.severity.charAt(0).toUpperCase() + disaster.severity.slice(1)}
+                {disaster.severity ? disaster.severity.charAt(0).toUpperCase() + disaster.severity.slice(1) : 'Unknown'}
               </Badge>
               <Badge
-                color={statusColors[disaster.status as keyof typeof statusColors]}
+                color={statusColors[disaster.status as keyof typeof statusColors] || 'gray'}
                 size="lg"
                 variant="outline"
               >
-                {disaster.status.charAt(0).toUpperCase() + disaster.status.slice(1)}
+                {disaster.status ? disaster.status.charAt(0).toUpperCase() + disaster.status.slice(1) : 'Unknown'}
               </Badge>
               {connected && (
                 <Badge color="green" variant="light" size="sm">
@@ -577,6 +590,111 @@ function DisasterDetailPage() {
 
         <Tabs.Panel value="history">
           <Stack gap="md" mt="md">
+            {/* Audit Trail */}
+            {(() => {
+              try {
+                const auditTrail = disaster.audit_trail;
+                if (auditTrail && Array.isArray(auditTrail) && auditTrail.length > 0) {
+                  return (
+                    <Card>
+                      <Title order={3} mb="md">
+                        <IconHistory size={20} style={{ marginRight: 8 }} />
+                        Audit Trail ({auditTrail.length} entries)
+                      </Title>
+                      <Timeline active={-1} bulletSize={24} lineWidth={2}>
+                        {auditTrail.map((entry: any, index: number) => {
+                          try {
+                            const action = entry?.action || 'unknown';
+                            const getActionIcon = (action: string) => {
+                              switch (action) {
+                                case 'create': return <IconAlertTriangle size={12} />;
+                                case 'update': return <IconRefresh size={12} />;
+                                case 'delete': return <IconX size={12} />;
+                                default: return <IconHistory size={12} />;
+                              }
+                            };
+
+                            const getActionColor = (action: string) => {
+                              switch (action) {
+                                case 'create': return 'green';
+                                case 'update': return 'blue';
+                                case 'delete': return 'red';
+                                default: return 'gray';
+                              }
+                            };
+
+                            return (
+                              <Timeline.Item
+                                key={index}
+                                bullet={<ThemeIcon color={getActionColor(action)} size={24} radius="xl">
+                                  {getActionIcon(action)}
+                                </ThemeIcon>}
+                                title={`${action.charAt(0).toUpperCase() + action.slice(1)} Action`}
+                              >
+                                <Text c="dimmed" size="sm">
+                                  {entry?.details || `Disaster ${action}d`}
+                                </Text>
+                                <Text size="sm" fw={500}>
+                                  By: {entry?.user_id || 'Unknown'}
+                                </Text>
+                                {entry?.changes && Array.isArray(entry.changes) && entry.changes.length > 0 && (
+                                  <Text size="xs" c="dimmed">
+                                    Changed: {entry.changes.join(', ')}
+                                  </Text>
+                                )}
+                                <Text size="xs" c="dimmed">
+                                  {entry?.timestamp ? new Date(entry.timestamp).toLocaleString() : 'Unknown time'}
+                                </Text>
+                              </Timeline.Item>
+                            );
+                          } catch (entryError) {
+                            console.error('Error rendering audit entry:', entryError, entry);
+                            return (
+                              <Timeline.Item key={index} title="Error loading audit entry">
+                                <Text c="red" size="sm">Failed to load audit entry</Text>
+                              </Timeline.Item>
+                            );
+                          }
+                        })}
+                      </Timeline>
+                    </Card>
+                  );
+                }
+                return null;
+              } catch (auditError) {
+                console.error('Error rendering audit trail:', auditError);
+                return (
+                  <Card>
+                    <Title order={3} mb="md">
+                      <IconHistory size={20} style={{ marginRight: 8 }} />
+                      Audit Trail
+                    </Title>
+                    <Text c="red" ta="center" py="xl">
+                      Error loading audit trail
+                    </Text>
+                  </Card>
+                );
+              }
+            })()}
+
+            {/* Show message if no audit trail */}
+            {(!disaster.audit_trail || !Array.isArray(disaster.audit_trail) || disaster.audit_trail.length === 0) && (
+              <Card>
+                <Title order={3} mb="md">
+                  <IconHistory size={20} style={{ marginRight: 8 }} />
+                  Audit Trail
+                </Title>
+                <Text c="dimmed" ta="center" py="xl">
+                  No audit trail available for this disaster.
+                  {disaster.created_at && (
+                    <Text size="sm" mt="xs">
+                      This disaster was created before audit trail functionality was implemented.
+                    </Text>
+                  )}
+                </Text>
+              </Card>
+            )}
+
             {/* Quick Timeline Overview */}
             <Card>
               <Title order={3} mb="md">Quick Timeline</Title>
@@ -633,6 +751,37 @@ function DisasterDetailPage() {
       </Tabs>
     </Container>
   );
+  } catch (error) {
+    console.error('❌ Error in DisasterDetailPage:', error);
+    return (
+      <Container size="md" py="xl">
+        <Alert
+          icon={<IconAlertCircle size="1.5rem" />}
+          title="Page Error"
+          color="red"
+          variant="outline"
+          my="xl"
+        >
+          <Text>An error occurred while loading this page. Please try refreshing or go back.</Text>
+          <Group mt="md">
+            <Button
+              variant="light"
+              onClick={() => navigate(-1)}
+              leftSection={<IconArrowLeft size={16} />}
+            >
+              Go Back
+            </Button>
+            <Button
+              variant="filled"
+              onClick={() => window.location.reload()}
+            >
+              Refresh Page
+            </Button>
+          </Group>
+        </Alert>
+      </Container>
+    );
+  }
 }
 
 export default DisasterDetailPage;

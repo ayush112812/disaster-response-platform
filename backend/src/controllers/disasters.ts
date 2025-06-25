@@ -2,10 +2,11 @@ import { Request, Response } from 'express';
 import { supabase } from '../services/supabase';
 import { extractLocation, verifyDisasterImage } from '../services/gemini';
 import { geocodeLocation } from '../services/geocoding';
+import { emitDisasterUpdated, emitResourcesUpdated } from '../websocket';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { emitToDisaster } from '../websocket';
 
-export const getDisasters = async (req: Request, res: Response) => {
+export const getDisasters = async (req: Request, res: Response): Promise<void> => {
   try {
     const { status, severity, tag } = req.query;
 
@@ -80,7 +81,8 @@ export const getDisasters = async (req: Request, res: Response) => {
         filteredDisasters = filteredDisasters.filter(d => d.tags.includes(tag as string));
       }
 
-      return res.json(filteredDisasters);
+      res.json(filteredDisasters);
+      return;
     }
 
     res.json(disasters);
@@ -90,7 +92,7 @@ export const getDisasters = async (req: Request, res: Response) => {
   }
 };
 
-export const getDisasterById = async (req: Request, res: Response) => {
+export const getDisasterById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -147,13 +149,18 @@ export const getDisasterById = async (req: Request, res: Response) => {
 
       const mockDisaster = mockDisasters.find(d => d.id === id);
       if (!mockDisaster) {
-        return res.status(404).json({ error: 'Disaster not found' });
+        res.status(404).json({ error: 'Disaster not found' });
+        return;
       }
 
-      return res.json(mockDisaster);
+      res.json(mockDisaster);
+      return;
     }
 
-    if (!disaster) return res.status(404).json({ error: 'Disaster not found' });
+    if (!disaster) {
+      res.status(404).json({ error: 'Disaster not found' });
+      return;
+    }
 
     res.json(disaster);
   } catch (error) {
@@ -177,6 +184,14 @@ export const createDisaster = async (req: AuthenticatedRequest, res: Response) =
 
     console.log('📍 Using coordinates:', coordinates);
 
+    // Create initial audit trail entry for creation
+    const initialAuditTrail = [{
+      action: 'create',
+      user_id: userId,
+      timestamp: new Date().toISOString(),
+      details: 'Disaster record created'
+    }];
+
     // Simplified disaster object to avoid database schema issues
     const disasterData = {
       title: title || 'Untitled Disaster',
@@ -185,7 +200,8 @@ export const createDisaster = async (req: AuthenticatedRequest, res: Response) =
       tags: Array.isArray(tags) ? tags : [],
       owner_id: userId,
       status: status || 'reported',
-      severity: severity || 'medium'
+      severity: severity || 'medium',
+      audit_trail: initialAuditTrail
     };
 
     console.log('💾 Inserting disaster data:', disasterData);
@@ -204,8 +220,8 @@ export const createDisaster = async (req: AuthenticatedRequest, res: Response) =
 
     console.log('✅ Disaster created successfully:', disaster);
 
-    // Notify via WebSocket
-    emitToDisaster(disaster.id, 'disaster_created', disaster);
+    // Emit disaster_updated event as specified in assignment
+    emitDisasterUpdated(disaster.id, 'create', disaster);
 
     res.status(201).json(disaster);
   } catch (error) {
@@ -223,14 +239,15 @@ export const createDisaster = async (req: AuthenticatedRequest, res: Response) =
   }
 };
 
-export const updateDisaster = async (req: AuthenticatedRequest, res: Response) => {
+export const updateDisaster = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const userId = req.user?.userId;
     const updates = req.body;
 
     if (!userId) {
-      return res.status(401).json({ error: 'User not authenticated' });
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
     }
 
     // Get current disaster
@@ -241,12 +258,14 @@ export const updateDisaster = async (req: AuthenticatedRequest, res: Response) =
       .single();
 
     if (fetchError || !currentDisaster) {
-      return res.status(404).json({ error: 'Disaster not found' });
+      res.status(404).json({ error: 'Disaster not found' });
+      return;
     }
 
     // Check permissions (only owner or admin can update)
     if (currentDisaster.owner_id !== userId && req.user?.role !== 'admin') {
-      return res.status(403).json({ error: 'Not authorized to update this disaster' });
+      res.status(403).json({ error: 'Not authorized to update this disaster' });
+      return;
     }
 
     // Handle location update if needed
@@ -257,12 +276,25 @@ export const updateDisaster = async (req: AuthenticatedRequest, res: Response) =
       }
     }
 
+    // Add audit trail entry for update
+    const currentAuditTrail = currentDisaster.audit_trail || [];
+    const newAuditEntry = {
+      action: 'update',
+      user_id: userId,
+      timestamp: new Date().toISOString(),
+      details: `Updated by ${req.user?.role === 'admin' ? 'admin' : 'owner'}`,
+      changes: Object.keys(updates).filter(key => key !== 'updated_at')
+    };
+
+    const updatedAuditTrail = [...currentAuditTrail, newAuditEntry];
+
     // Update disaster
     const { data: updatedDisaster, error: updateError } = await supabase
       .from('disasters')
       .update({
         ...updates,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        audit_trail: updatedAuditTrail
       })
       .eq('id', id)
       .select()
@@ -272,8 +304,8 @@ export const updateDisaster = async (req: AuthenticatedRequest, res: Response) =
 
 
 
-    // Notify via WebSocket
-    emitToDisaster(id, 'disaster_updated', updatedDisaster);
+    // Emit disaster_updated event as specified in assignment
+    emitDisasterUpdated(id, 'update', updatedDisaster);
 
     res.json(updatedDisaster);
   } catch (error) {
@@ -282,13 +314,14 @@ export const updateDisaster = async (req: AuthenticatedRequest, res: Response) =
   }
 };
 
-export const deleteDisaster = async (req: AuthenticatedRequest, res: Response) => {
+export const deleteDisaster = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({ error: 'User not authenticated' });
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
     }
 
     // Get current disaster
@@ -299,13 +332,40 @@ export const deleteDisaster = async (req: AuthenticatedRequest, res: Response) =
       .single();
 
     if (fetchError || !currentDisaster) {
-      return res.status(404).json({ error: 'Disaster not found' });
+      res.status(404).json({ error: 'Disaster not found' });
+      return;
     }
 
     // Check permissions (only owner or admin can delete)
     if (currentDisaster.owner_id !== userId && req.user?.role !== 'admin') {
-      return res.status(403).json({ error: 'Not authorized to delete this disaster' });
+      res.status(403).json({ error: 'Not authorized to delete this disaster' });
+      return;
     }
+
+    // Add final audit trail entry before deletion
+    const currentAuditTrail = currentDisaster.audit_trail || [];
+    const deleteAuditEntry = {
+      action: 'delete',
+      user_id: userId,
+      timestamp: new Date().toISOString(),
+      details: `Deleted by ${req.user?.role === 'admin' ? 'admin' : 'owner'}`,
+      final_state: {
+        title: currentDisaster.title,
+        status: currentDisaster.status,
+        owner_id: currentDisaster.owner_id
+      }
+    };
+
+    const finalAuditTrail = [...currentAuditTrail, deleteAuditEntry];
+
+    // Update with final audit trail before deletion (for record keeping)
+    await supabase
+      .from('disasters')
+      .update({
+        audit_trail: finalAuditTrail,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id);
 
     // Delete disaster
     const { error: deleteError } = await supabase
@@ -317,8 +377,8 @@ export const deleteDisaster = async (req: AuthenticatedRequest, res: Response) =
 
 
 
-    // Notify via WebSocket
-    emitToDisaster(id, 'disaster_deleted', { id });
+    // Emit disaster_updated event as specified in assignment
+    emitDisasterUpdated(id, 'delete', { id, title: currentDisaster.title });
 
     res.status(204).send();
   } catch (error) {
@@ -344,14 +404,15 @@ export const getDisasterResources = async (req: Request, res: Response) => {
   }
 };
 
-export const addResource = async (req: AuthenticatedRequest, res: Response) => {
+export const addResource = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const userId = req.user?.userId;
     const { name, description, location_name, type, quantity, contact_info } = req.body;
 
     if (!userId) {
-      return res.status(401).json({ error: 'User not authenticated' });
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
     }
 
     // Check if disaster exists
@@ -362,7 +423,8 @@ export const addResource = async (req: AuthenticatedRequest, res: Response) => {
       .single();
 
     if (disasterError || !disaster) {
-      return res.status(404).json({ error: 'Disaster not found' });
+      res.status(404).json({ error: 'Disaster not found' });
+      return;
     }
 
     // Geocode the location if provided

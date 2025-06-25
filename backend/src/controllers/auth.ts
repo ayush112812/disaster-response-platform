@@ -4,14 +4,15 @@ import { registerUser, loginUser, getCurrentUser } from '../services/auth';
 import { supabase } from '../services/supabase';
 
 // Register a new user
-export const register = async (req: Request, res: Response) => {
+export const register = async (req: Request, res: Response): Promise<void> => {
   try {
     const { username, email, password } = req.body;
-    
+
     if (!username || !email || !password) {
-      return res.status(400).json({ 
-        error: 'Username, email, and password are required' 
+      res.status(400).json({
+        error: 'Username, email, and password are required'
       });
+      return;
     }
 
     const user = await registerUser(username, email, password);
@@ -36,18 +37,19 @@ export const register = async (req: Request, res: Response) => {
 };
 
 // Login user
-export const login = async (req: Request, res: Response) => {
+export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
-    
+
     if (!email || !password) {
-      return res.status(400).json({ 
-        error: 'Email and password are required' 
+      res.status(400).json({
+        error: 'Email and password are required'
       });
+      return;
     }
 
     const { user, token } = await loginUser(email, password);
-    
+
     res.json({
       status: 'success',
       data: {
@@ -65,16 +67,17 @@ export const login = async (req: Request, res: Response) => {
 };
 
 // Get current user profile
-export const getProfile = async (req: any, res: Response) => {
+export const getProfile = async (req: any, res: Response): Promise<void> => {
   try {
     // The user is already attached to the request by the authenticateToken middleware
     const user = req.user;
     
     if (!user) {
-      return res.status(401).json({ 
+      res.status(401).json({
         status: 'error',
-        message: 'User not authenticated' 
+        message: 'User not authenticated'
       });
+      return;
     }
 
     // Get fresh user data from the database
@@ -96,23 +99,25 @@ export const getProfile = async (req: any, res: Response) => {
 };
 
 // Change user password
-export const changePassword = async (req: any, res: Response) => {
+export const changePassword = async (req: any, res: Response): Promise<void> => {
   try {
     const { currentPassword, newPassword } = req.body;
     const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({ 
+      res.status(401).json({
         status: 'error',
-        message: 'User not authenticated' 
+        message: 'User not authenticated'
       });
+      return;
     }
 
     if (!currentPassword || !newPassword) {
-      return res.status(400).json({ 
+      res.status(400).json({
         status: 'error',
-        message: 'Current password and new password are required' 
+        message: 'Current password and new password are required'
       });
+      return;
     }
 
     // Get current user with password hash
@@ -123,19 +128,21 @@ export const changePassword = async (req: any, res: Response) => {
       .single();
 
     if (fetchError || !user) {
-      return res.status(404).json({ 
+      res.status(404).json({
         status: 'error',
-        message: 'User not found' 
+        message: 'User not found'
       });
+      return;
     }
 
     // Verify current password
     const isPasswordValid = await bcrypt.compare(currentPassword, user.password_hash);
     if (!isPasswordValid) {
-      return res.status(401).json({ 
+      res.status(401).json({
         status: 'error',
-        message: 'Current password is incorrect' 
+        message: 'Current password is incorrect'
       });
+      return;
     }
 
     // Hash new password

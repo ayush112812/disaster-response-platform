@@ -367,12 +367,56 @@ export function emitToAll(event: string, data: any) {
   }
 }
 
+// WebSocket event emitters as specified in assignment
+// "Emit disaster_updated on create/update/delete"
+export function emitDisasterUpdated(disasterId: string, action: 'create' | 'update' | 'delete', data: any) {
+  console.log(`📡 Emitting disaster_updated: ${action} for disaster ${disasterId}`);
+  emitToDisaster(disasterId, 'disaster_updated', {
+    action,
+    disaster: data,
+    timestamp: new Date().toISOString()
+  });
+  // Also emit to all clients for general updates
+  emitToAll('disaster_updated', {
+    action,
+    disaster: data,
+    timestamp: new Date().toISOString()
+  });
+}
+
+// "Emit social_media_updated on new social media results"
 export function emitSocialMediaUpdate(disasterId: string, data: any) {
-  emitToDisaster(disasterId, 'social_media_updated', data);
+  console.log(`📡 Emitting social_media_updated for disaster ${disasterId}`);
+  emitToDisaster(disasterId, 'social_media_updated', {
+    disaster_id: disasterId,
+    data,
+    timestamp: new Date().toISOString()
+  });
+}
+
+// "Broadcast resources_updated on new geospatial data"
+export function emitResourcesUpdated(disasterId: string, data: any) {
+  console.log(`📡 Emitting resources_updated for disaster ${disasterId}`);
+  emitToDisaster(disasterId, 'resources_updated', {
+    disaster_id: disasterId,
+    resources: data,
+    timestamp: new Date().toISOString()
+  });
+  // Also emit to all clients for resource updates
+  emitToAll('resources_updated', {
+    disaster_id: disasterId,
+    resources: data,
+    timestamp: new Date().toISOString()
+  });
 }
 
 export function emitOfficialUpdates(disasterId: string, data: any) {
-  emitToDisaster(disasterId, 'official_updates_updated', data);
+  console.log(`📡 Emitting official_updates_updated for disaster ${disasterId}`);
+  emitToDisaster(disasterId, 'official_updates_updated', {
+    disaster_id: disasterId,
+    updates: data,
+    timestamp: new Date().toISOString()
+  });
 }
 
 export function getIO() {

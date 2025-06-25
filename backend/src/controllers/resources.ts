@@ -39,7 +39,7 @@ export const getResources = async (req: Request, res: Response) => {
   }
 };
 
-export const getResourceById = async (req: Request, res: Response) => {
+export const getResourceById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     
@@ -50,7 +50,10 @@ export const getResourceById = async (req: Request, res: Response) => {
       .single();
 
     if (error) throw error;
-    if (!resource) return res.status(404).json({ error: 'Resource not found' });
+    if (!resource) {
+      res.status(404).json({ error: 'Resource not found' });
+      return;
+    }
 
     res.json(resource);
   } catch (error) {
@@ -59,14 +62,15 @@ export const getResourceById = async (req: Request, res: Response) => {
   }
 };
 
-export const createResource = async (req: AuthenticatedRequest, res: Response) => {
+export const createResource = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { disasterId } = req.params;
     const { name, description, location_name, type, quantity, contact_info } = req.body;
     const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({ error: 'User not authenticated' });
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
     }
 
     // Check if disaster exists
@@ -77,7 +81,8 @@ export const createResource = async (req: AuthenticatedRequest, res: Response) =
       .single();
 
     if (disasterError || !disaster) {
-      return res.status(404).json({ error: 'Disaster not found' });
+      res.status(404).json({ error: 'Disaster not found' });
+      return;
     }
 
     // Geocode the location if provided
@@ -117,14 +122,15 @@ export const createResource = async (req: AuthenticatedRequest, res: Response) =
   }
 };
 
-export const updateResource = async (req: AuthenticatedRequest, res: Response) => {
+export const updateResource = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const userId = req.user?.userId;
     const updates = req.body;
 
     if (!userId) {
-      return res.status(401).json({ error: 'User not authenticated' });
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
     }
 
     // Get current resource
@@ -135,12 +141,14 @@ export const updateResource = async (req: AuthenticatedRequest, res: Response) =
       .single();
 
     if (fetchError || !currentResource) {
-      return res.status(404).json({ error: 'Resource not found' });
+      res.status(404).json({ error: 'Resource not found' });
+      return;
     }
 
     // Check permissions (only creator or admin can update)
     if (currentResource.created_by !== userId && req.user?.role !== 'admin') {
-      return res.status(403).json({ error: 'Not authorized to update this resource' });
+      res.status(403).json({ error: 'Not authorized to update this resource' });
+      return;
     }
 
     // Handle location update if needed
@@ -174,13 +182,14 @@ export const updateResource = async (req: AuthenticatedRequest, res: Response) =
   }
 };
 
-export const deleteResource = async (req: AuthenticatedRequest, res: Response) => {
+export const deleteResource = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({ error: 'User not authenticated' });
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
     }
 
     // Get current resource
@@ -191,12 +200,14 @@ export const deleteResource = async (req: AuthenticatedRequest, res: Response) =
       .single();
 
     if (fetchError || !currentResource) {
-      return res.status(404).json({ error: 'Resource not found' });
+      res.status(404).json({ error: 'Resource not found' });
+      return;
     }
 
     // Check permissions (only creator or admin can delete)
     if (currentResource.created_by !== userId && req.user?.role !== 'admin') {
-      return res.status(403).json({ error: 'Not authorized to delete this resource' });
+      res.status(403).json({ error: 'Not authorized to delete this resource' });
+      return;
     }
 
     // Delete resource

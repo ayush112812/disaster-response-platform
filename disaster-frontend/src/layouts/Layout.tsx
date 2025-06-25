@@ -1,4 +1,5 @@
 import { AppShell, Container, Box } from '@mantine/core';
+import { useViewportSize } from '@mantine/hooks';
 import Navbar from '../components/Navbar';
 
 interface LayoutProps {
@@ -6,11 +7,15 @@ interface LayoutProps {
 }
 
 function Layout({ children }: LayoutProps) {
+  const { width } = useViewportSize();
+  const isMobile = width < 768;
+  const headerHeight = isMobile ? 60 : 70;
+
   return (
     <AppShell
-      padding="md"
+      padding={isMobile ? "xs" : "md"}
       header={{
-        height: 70,
+        height: headerHeight,
         offset: false,
       }}
     >
@@ -18,7 +23,8 @@ function Layout({ children }: LayoutProps) {
         style={{
           borderBottom: '1px solid #e9ecef',
           backgroundColor: '#ffffff',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+          zIndex: 1000
         }}
       >
         <Navbar />
@@ -26,12 +32,22 @@ function Layout({ children }: LayoutProps) {
       <AppShell.Main
         style={{
           backgroundColor: '#f8f9fa',
-          minHeight: 'calc(100vh - 70px)'
+          minHeight: `calc(100vh - ${headerHeight}px)`,
+          paddingTop: isMobile ? '8px' : '16px'
         }}
       >
-        <Box py="md">
-          {children}
-        </Box>
+        <Container
+          size="xl"
+          px={isMobile ? "xs" : "md"}
+          style={{
+            width: '100%',
+            maxWidth: '100%'
+          }}
+        >
+          <Box py={isMobile ? "xs" : "md"}>
+            {children}
+          </Box>
+        </Container>
       </AppShell.Main>
     </AppShell>
   );

@@ -121,6 +121,8 @@ const resourceTypeColors = {
 };
 
 function ResourcesPage() {
+  console.log('🔍 ResourcesPage component rendering...');
+
   const [searchLocation, setSearchLocation] = useState('');
   const [resourceType, setResourceType] = useState<string | null>(null);
   const [radius, setRadius] = useState<number>(10);
@@ -128,6 +130,16 @@ function ResourcesPage() {
   const [activeTab, setActiveTab] = useState<string>('list');
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const { socket, connected } = useWebSocket();
+
+  console.log('🔍 ResourcesPage state:', {
+    searchLocation,
+    resourceType,
+    radius,
+    coordinates,
+    activeTab,
+    userLocation,
+    connected
+  });
 
   // Get user's current location
   useEffect(() => {
@@ -480,25 +492,35 @@ function ResourcesPage() {
             )}
 
             {coordinates ? (
-              <InteractiveMap
-                resources={resources.map(resource => ({
-                  ...resource,
-                  coordinates: resource.coordinates || {
-                    // Generate mock coordinates near the search center for demo
-                    lat: (coordinates?.lat || 40.7128) + (Math.random() - 0.5) * 0.02,
-                    lng: (coordinates?.lng || -74.0060) + (Math.random() - 0.5) * 0.02
-                  }
-                }))}
-                center={[coordinates.lat, coordinates.lng]}
-                zoom={12}
-                radius={radius * 1000} // Convert km to meters
-                height={500}
-                showUserLocation={true}
-                onLocationChange={(lat, lng) => {
-                  console.log('Map center changed:', lat, lng);
-                  // Could update search center here if needed
-                }}
-              />
+              <div>
+                <InteractiveMap
+                  resources={resources.map(resource => ({
+                    ...resource,
+                    coordinates: resource.coordinates || {
+                      // Generate mock coordinates near the search center for demo
+                      lat: (coordinates?.lat || 40.7128) + (Math.random() - 0.5) * 0.02,
+                      lng: (coordinates?.lng || -74.0060) + (Math.random() - 0.5) * 0.02
+                    }
+                  }))}
+                  center={[coordinates.lat, coordinates.lng]}
+                  zoom={12}
+                  radius={radius * 1000} // Convert km to meters
+                  height={500}
+                  showUserLocation={true}
+                  onLocationChange={(lat, lng) => {
+                    console.log('Map center changed:', lat, lng);
+                    // Could update search center here if needed
+                  }}
+                />
+
+                <Alert color="blue" variant="light" mt="md">
+                  <Text size="sm">
+                    <strong>Map Features:</strong> The map will automatically retry if it fails to load and switch to backup servers if needed.
+                    If you see "Using backup tile server", the map is working around connectivity issues.
+                    Use the List View tab above for a reliable alternative view.
+                  </Text>
+                </Alert>
+              </div>
             ) : (
               <Paper withBorder style={{ height: 500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Stack align="center" gap="md">

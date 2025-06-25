@@ -18,8 +18,10 @@ import {
   NumberInput,
   Tabs,
   Paper,
-  Divider
+  Divider,
+  Box
 } from '@mantine/core';
+import { useViewportSize } from '@mantine/hooks';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
@@ -32,10 +34,11 @@ import {
   IconPlus,
   IconList,
   IconMap,
-  IconCalendar
+  IconCalendar,
+  IconTrash
 } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
-import { getDisasters, getNearbyDisasters, geocodeLocation, Disaster, ApiError } from '../services/api';
+import { getDisasters, getNearbyDisasters, geocodeLocation, deleteDisaster, Disaster, ApiError } from '../services/api';
 import { useWebSocket } from '../hooks/useWebSocket';
 
 const severityColors = {
@@ -56,8 +59,12 @@ function DisastersPage() {
   const [activeTab, setActiveTab] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('created_at');
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const { socket, connected } = useWebSocket();
+  const { width } = useViewportSize();
+  const isMobile = width < 768;
+  const isTablet = width < 1024;
 
   // Get user's current location
   useEffect(() => {
@@ -166,6 +173,27 @@ function DisastersPage() {
     }
   };
 
+  // Handle disaster deletion
+  const handleDeleteDisaster = async (disasterId: string, disasterTitle: string) => {
+    const confirmed = window.confirm(`Are you sure you want to delete "${disasterTitle}"? This action cannot be undone.`);
+
+    if (!confirmed) return;
+
+    setDeletingId(disasterId);
+    try {
+      await deleteDisaster(disasterId);
+      refetch(); // Refresh the disasters list
+      if (coordinates) refetchNearby(); // Refresh nearby disasters if applicable
+      alert(`Successfully deleted "${disasterTitle}"`);
+    } catch (error: any) {
+      console.error('Failed to delete disaster:', error);
+      const errorMessage = error?.response?.data?.error || error?.message || 'Unknown error occurred';
+      alert(`Failed to delete disaster: ${errorMessage}`);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   // Get the appropriate disaster list
   const allDisasters = coordinates && nearbyDisastersData
     ? nearbyDisastersData.disasters
@@ -239,32 +267,66 @@ function DisastersPage() {
 
 
   return (
-    <Container size="xl" py="xl">
-      <Group justify="space-between" mb="xl">
-        <div>
-          <Title order={1}>Disaster Management</Title>
-          <Text c="dimmed" size="lg">
-            Search, filter, and manage disaster reports
-          </Text>
-        </div>
-        <Group>
-          <Badge color="blue" variant="filled" size="lg">
-            {sortedDisasters.length} Disasters
-          </Badge>
-          {connected && (
-            <Badge color="green" variant="light" size="sm">
-              Live Updates
-            </Badge>
-          )}
-          <Button
-            component={Link}
-            to="/disasters/new"
-            leftSection={<IconPlus size={16} />}
-          >
-            Report Disaster
-          </Button>
-        </Group>
-      </Group>
+    <Container size="xl" py={isMobile ? "md" : "xl"}>
+      <Box mb={isMobile ? "md" : "xl"}>
+        {isMobile ? (
+          <Stack gap="md">
+            <div>
+              <Title order={isMobile ? 2 : 1}>Disaster Management</Title>
+              <Text c="dimmed" size={isMobile ? "md" : "lg"}>
+                Search, filter, and manage disaster reports
+              </Text>
+            </div>
+            <Group justify="space-between" wrap="wrap">
+              <Group gap="xs">
+                <Badge color="blue" variant="filled" size={isMobile ? "md" : "lg"}>
+                  {sortedDisasters.length} Disasters
+                </Badge>
+                {connected && (
+                  <Badge color="green" variant="light" size="sm">
+                    Live Updates
+                  </Badge>
+                )}
+              </Group>
+              <Button
+                component={Link}
+                to="/disasters/new"
+                leftSection={<IconPlus size={16} />}
+                size={isMobile ? "sm" : "md"}
+                fullWidth={isMobile}
+              >
+                Report Disaster
+              </Button>
+            </Group>
+          </Stack>
+        ) : (
+          <Group justify="space-between">
+            <div>
+              <Title order={1}>Disaster Management</Title>
+              <Text c="dimmed" size="lg">
+                Search, filter, and manage disaster reports
+              </Text>
+            </div>
+            <Group>
+              <Badge color="blue" variant="filled" size="lg">
+                {sortedDisasters.length} Disasters
+              </Badge>
+              {connected && (
+                <Badge color="green" variant="light" size="sm">
+                  Live Updates
+                </Badge>
+              )}
+              <Button
+                component={Link}
+                to="/disasters/new"
+                leftSection={<IconPlus size={16} />}
+              >
+                Report Disaster
+              </Button>
+            </Group>
+          </Group>
+        )}
+      </Box>
 
       {/* Advanced Search and Filters */}
       <Card mb="xl">
@@ -481,6 +543,8 @@ function DisastersPage() {
             style={{
               textDecoration: 'none',
               transition: 'transform 0.2s, box-shadow 0.2s',
+              cursor: 'pointer',
+              position: 'relative'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-2px)';
@@ -491,37 +555,99 @@ function DisastersPage() {
               e.currentTarget.style.boxShadow = '';
             }}
           >
-            <Group justify="space-between" mb="xs" wrap="nowrap">
-              <Text fw={600} size="lg" lineClamp={1}>
-                {disaster.title}
-              </Text>
-              <Group gap="xs">
-                <Badge
-                  color={severityColors[disaster.severity]}
-                  variant="filled"
+            {isMobile ? (
+              <Stack gap="xs" mb="xs">
+                <Text
+                  fw={600}
                   size="lg"
-                  radius="sm"
+                  lineClamp={2}
+                  style={{
+                    color: 'inherit'
+                  }}
                 >
-                  {disaster.severity.charAt(0).toUpperCase() + disaster.severity.slice(1)}
-                </Badge>
-                <Badge
-                  color={disaster.status === 'resolved' ? 'green' : disaster.status === 'false_alarm' ? 'gray' : 'blue'}
-                  variant="light"
-                  size="sm"
+                  {disaster.title}
+                </Text>
+                <Group gap="xs" justify="flex-start">
+                  <Badge
+                    color={severityColors[disaster.severity]}
+                    variant="filled"
+                    size="md"
+                    radius="sm"
+                  >
+                    {disaster.severity.charAt(0).toUpperCase() + disaster.severity.slice(1)}
+                  </Badge>
+                  <Badge
+                    color={disaster.status === 'resolved' ? 'green' : disaster.status === 'false_alarm' ? 'gray' : 'blue'}
+                    variant="light"
+                    size="sm"
+                  >
+                    {disaster.status.replace('_', ' ').toUpperCase()}
+                  </Badge>
+                </Group>
+              </Stack>
+            ) : (
+              <Group justify="space-between" mb="xs" wrap="nowrap">
+                <Text
+                  fw={600}
+                  size="lg"
+                  lineClamp={1}
+                  style={{
+                    color: 'inherit'
+                  }}
                 >
-                  {disaster.status.replace('_', ' ').toUpperCase()}
-                </Badge>
+                  {disaster.title}
+                </Text>
+                <Group gap="xs">
+                  <Badge
+                    color={severityColors[disaster.severity]}
+                    variant="filled"
+                    size="lg"
+                    radius="sm"
+                  >
+                    {disaster.severity.charAt(0).toUpperCase() + disaster.severity.slice(1)}
+                  </Badge>
+                  <Badge
+                    color={disaster.status === 'resolved' ? 'green' : disaster.status === 'false_alarm' ? 'gray' : 'blue'}
+                    variant="light"
+                    size="sm"
+                  >
+                    {disaster.status.replace('_', ' ').toUpperCase()}
+                  </Badge>
+                </Group>
               </Group>
-            </Group>
+            )}
 
-            <Group gap="sm" mb="xs">
-              <Text size="sm" c="dimmed">
-                📍 {disaster.location_name}
-              </Text>
-              <Text size="sm" c="dimmed">
-                👤 {disaster.owner_id}
-              </Text>
-            </Group>
+            {isMobile ? (
+              <Stack gap="xs" mb="xs">
+                <Text size="sm" c="dimmed">
+                  📍 {disaster.location_name}
+                </Text>
+                <Group gap="md">
+                  <Text size="sm" c="dimmed">
+                    👤 {disaster.owner_id}
+                  </Text>
+                  {disaster.audit_trail && Array.isArray(disaster.audit_trail) && disaster.audit_trail.length > 0 && (
+                    <Text size="sm" c="dimmed">
+                      📋 {disaster.audit_trail.length} audit entries
+                    </Text>
+                  )}
+                </Group>
+              </Stack>
+            ) : (
+              <Group gap="sm" mb="xs">
+                <Text size="sm" c="dimmed">
+                  📍 {disaster.location_name}
+                </Text>
+                <Text size="sm" c="dimmed">
+                  👤 {disaster.owner_id}
+                </Text>
+                {disaster.audit_trail && Array.isArray(disaster.audit_trail) && disaster.audit_trail.length > 0 && (
+                  <Text size="sm" c="dimmed">
+                    📋 {disaster.audit_trail.length} audit entries
+                  </Text>
+                )}
+              </Group>
+            )}
 
             <Text size="sm" lineClamp={2} mb="sm">
               {disaster.description}
@@ -537,14 +663,65 @@ function DisastersPage() {
               </Group>
             )}
 
-            <Group justify="space-between" gap="xs">
-              <Text size="xs" c="dimmed">
-                🕒 {new Date(disaster.created_at).toLocaleString()}
-              </Text>
-              <Text size="xs" c="dimmed">
-                📝 Updated: {new Date(disaster.updated_at).toLocaleString()}
-              </Text>
-            </Group>
+            {isMobile ? (
+              <Stack gap="xs">
+                <Group justify="space-between" align="flex-start">
+                  <Stack gap="xs" style={{ flex: 1 }}>
+                    <Text size="xs" c="dimmed">
+                      🕒 {new Date(disaster.created_at).toLocaleDateString()}
+                    </Text>
+                    <Text size="xs" c="dimmed">
+                      📝 Updated: {new Date(disaster.updated_at).toLocaleDateString()}
+                    </Text>
+                  </Stack>
+                  <Tooltip label="Delete disaster">
+                    <ActionIcon
+                      variant="light"
+                      color="red"
+                      size="md"
+                      loading={deletingId === disaster.id}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.nativeEvent.stopImmediatePropagation();
+                        handleDeleteDisaster(disaster.id, disaster.title);
+                      }}
+                      style={{ zIndex: 10 }}
+                    >
+                      <IconTrash size={16} />
+                    </ActionIcon>
+                  </Tooltip>
+                </Group>
+              </Stack>
+            ) : (
+              <Group justify="space-between" gap="xs">
+                <div>
+                  <Text size="xs" c="dimmed">
+                    🕒 {new Date(disaster.created_at).toLocaleString()}
+                  </Text>
+                  <Text size="xs" c="dimmed">
+                    📝 Updated: {new Date(disaster.updated_at).toLocaleString()}
+                  </Text>
+                </div>
+                <Tooltip label="Delete disaster">
+                  <ActionIcon
+                    variant="light"
+                    color="red"
+                    size="sm"
+                    loading={deletingId === disaster.id}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      e.nativeEvent.stopImmediatePropagation();
+                      handleDeleteDisaster(disaster.id, disaster.title);
+                    }}
+                    style={{ zIndex: 10 }}
+                  >
+                    <IconTrash size={14} />
+                  </ActionIcon>
+                </Tooltip>
+              </Group>
+            )}
           </Card>
         ))}
       </Stack>

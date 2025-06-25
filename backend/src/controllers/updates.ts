@@ -4,7 +4,7 @@ import { getSocialMediaPosts, getCachedSocialMedia } from '../services/socialMed
 import { scrapeOfficialUpdates } from '../services/officialUpdates';
 import { AuthenticatedRequest } from '../middleware/auth';
 
-export const getSocialMediaUpdates = async (req: Request, res: Response) => {
+export const getSocialMediaUpdates = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id: disasterId } = req.params;
     const { limit = '10', offset = '0', urgent } = req.query;
@@ -12,10 +12,11 @@ export const getSocialMediaUpdates = async (req: Request, res: Response) => {
     // Check cache first
     const cached = await getCachedSocialMedia(disasterId);
     if (cached) {
-      return res.json({
+      res.json({
         ...cached,
         fromCache: true
       });
+      return;
     }
     
     // If not in cache, fetch fresh data
@@ -35,7 +36,7 @@ export const getSocialMediaUpdates = async (req: Request, res: Response) => {
   }
 };
 
-export const getOfficialUpdates = async (req: Request, res: Response) => {
+export const getOfficialUpdates = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id: disasterId } = req.params;
     const cacheKey = `official_updates_${disasterId}`;
@@ -49,10 +50,11 @@ export const getOfficialUpdates = async (req: Request, res: Response) => {
       .single();
     
     if (cached) {
-      return res.json({
+      res.json({
         ...cached,
         fromCache: true
       });
+      return;
     }
     
     // If not in cache, scrape fresh data

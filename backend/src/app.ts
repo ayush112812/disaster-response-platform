@@ -43,7 +43,7 @@ const allowedOrigins = process.env.NODE_ENV === 'production'
 app.use(cors({
   origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-user'],
   credentials: false
 }));
 app.use(express.json({ limit: '10mb' }));

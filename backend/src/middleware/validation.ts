@@ -21,10 +21,11 @@ export const validate = (validations?: ValidationChain[]) => {
       extractedErrors.push({ [path]: msg });
     });
 
-    return res.status(400).json({
+    res.status(400).json({
       error: 'Validation failed',
       details: extractedErrors
     });
+    return;
   };
 };
 

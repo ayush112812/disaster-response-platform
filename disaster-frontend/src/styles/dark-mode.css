@@ -1,0 +1,285 @@
+/* Dark Mode Styles - Can be easily removed by deleting this file */
+
+/* Dark mode root variables */
+[data-theme="dark"] {
+  --background-color: #1a1b23;
+  --surface-color: #25262b;
+  --surface-hover: #2c2e33;
+  --text-primary: #c1c2c5;
+  --text-secondary: #909296;
+  --border-color: #373a40;
+  --accent-color: #339af0;
+  --danger-color: #fa5252;
+  --success-color: #51cf66;
+  --warning-color: #ffd43b;
+}
+
+/* Main background */
+[data-theme="dark"] body {
+  background-color: var(--background-color) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Mantine components dark mode overrides */
+[data-theme="dark"] .mantine-AppShell-main {
+  background-color: var(--background-color) !important;
+}
+
+[data-theme="dark"] .mantine-Paper-root {
+  background-color: var(--surface-color) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .mantine-Card-root {
+  background-color: var(--surface-color) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .mantine-Text-root {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .mantine-Title-root {
+  color: var(--text-primary) !important;
+}
+
+/* Navigation and header */
+[data-theme="dark"] .mantine-Header-root {
+  background-color: var(--surface-color) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .mantine-AppShell-header {
+  background-color: var(--surface-color) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .mantine-Navbar-root {
+  background-color: var(--surface-color) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .mantine-NavLink-root {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .mantine-NavLink-root:hover {
+  background-color: var(--surface-hover) !important;
+}
+
+/* Custom navbar container */
+[data-theme="dark"] .navbar-container {
+  background-color: var(--surface-color) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Navbar title in dark mode */
+[data-theme="dark"] .navbar-title {
+  color: var(--accent-color) !important;
+}
+
+/* Navigation buttons in dark mode */
+[data-theme="dark"] .mantine-Button-root {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .mantine-Button-subtle {
+  color: var(--text-primary) !important;
+  background-color: transparent !important;
+}
+
+[data-theme="dark"] .mantine-Button-subtle:hover {
+  background-color: var(--surface-hover) !important;
+}
+
+/* Active navigation button */
+[data-theme="dark"] .mantine-Button-filled {
+  background-color: var(--accent-color) !important;
+  color: white !important;
+}
+
+/* Burger menu in dark mode */
+[data-theme="dark"] .mantine-Burger-burger {
+  color: var(--text-primary) !important;
+}
+
+/* Mobile drawer in dark mode */
+[data-theme="dark"] .mantine-Drawer-content {
+  background-color: var(--surface-color) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .mantine-Drawer-header {
+  background-color: var(--surface-color) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Buttons */
+[data-theme="dark"] .mantine-Button-root {
+  background-color: var(--accent-color) !important;
+  color: white !important;
+}
+
+[data-theme="dark"] .mantine-Button-outline {
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+  background-color: transparent !important;
+}
+
+[data-theme="dark"] .mantine-Button-outline:hover {
+  background-color: var(--surface-hover) !important;
+}
+
+/* Forms */
+[data-theme="dark"] .mantine-TextInput-input,
+[data-theme="dark"] .mantine-Textarea-input,
+[data-theme="dark"] .mantine-Select-input,
+[data-theme="dark"] .mantine-NumberInput-input {
+  background-color: var(--surface-color) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .mantine-TextInput-label,
+[data-theme="dark"] .mantine-Textarea-label,
+[data-theme="dark"] .mantine-Select-label,
+[data-theme="dark"] .mantine-NumberInput-label {
+  color: var(--text-primary) !important;
+}
+
+/* Tables */
+[data-theme="dark"] .mantine-Table-root {
+  background-color: var(--surface-color) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .mantine-Table-root th {
+  background-color: var(--surface-hover) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .mantine-Table-root td {
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Tabs */
+[data-theme="dark"] .mantine-Tabs-root {
+  background-color: var(--surface-color) !important;
+}
+
+[data-theme="dark"] .mantine-Tabs-tab {
+  color: var(--text-secondary) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .mantine-Tabs-tab[data-active="true"] {
+  color: var(--accent-color) !important;
+  border-color: var(--accent-color) !important;
+}
+
+/* Modals and overlays */
+[data-theme="dark"] .mantine-Modal-content {
+  background-color: var(--surface-color) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .mantine-Modal-header {
+  background-color: var(--surface-color) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Notifications */
+[data-theme="dark"] .mantine-Notification-root {
+  background-color: var(--surface-color) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Map dark mode */
+[data-theme="dark"] .interactive-map-container {
+  background-color: var(--surface-color) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .leaflet-container {
+  background-color: var(--surface-color) !important;
+}
+
+/* Disaster cards */
+[data-theme="dark"] .disaster-card {
+  background-color: var(--surface-color) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .disaster-card:hover {
+  background-color: var(--surface-hover) !important;
+}
+
+/* Status badges */
+[data-theme="dark"] .mantine-Badge-root {
+  background-color: var(--surface-hover) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Scrollbars */
+[data-theme="dark"] ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: var(--surface-color);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Additional navbar styling to ensure proper dark mode */
+[data-theme="dark"] header,
+[data-theme="dark"] .mantine-AppShell-header,
+[data-theme="dark"] .navbar-container {
+  background-color: var(--surface-color) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+[data-theme="dark"] .mantine-AppShell-main {
+  background-color: var(--background-color) !important;
+}
+
+/* Ensure all navbar elements are properly styled */
+[data-theme="dark"] .navbar-logo-section {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .navbar-menu-section {
+  color: var(--text-primary) !important;
+}
+
+/* Badge styling in dark mode */
+[data-theme="dark"] .mantine-Badge-root {
+  background-color: var(--surface-hover) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+/* Special badge colors for dark mode */
+[data-theme="dark"] .mantine-Badge-root[data-variant="filled"] {
+  color: white !important;
+}
+
+/* Icon styling in navbar */
+[data-theme="dark"] .navbar-container svg {
+  color: inherit !important;
+}

@@ -1,3 +1,6 @@
+/* Dark mode styles import - can be removed by deleting this line */
+@import './styles/dark-mode.css';
+
 /* Basic reset and base styles */
 :root {
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -17,6 +20,16 @@
   padding: 0;
 }
 
+html {
+  /* Prevent horizontal scrolling */
+  overflow-x: hidden;
+  /* Ensure proper mobile scaling */
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  width: 100%;
+  max-width: 100%;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -25,17 +38,25 @@ body {
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
   color: var(--text-color);
-  background-color: var(--background);
+  background-color: var(--background) !important;
+  background: var(--background) !important;
   display: flex;
   place-items: center;
   min-width: 320px;
+  /* Prevent horizontal scrolling */
+  overflow-x: hidden;
+  /* Ensure proper width */
+  width: 100%;
+  max-width: 100%;
 }
 
 #root {
   width: 100%;
+  max-width: 100%;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
 a {
@@ -103,10 +124,46 @@ h4 { font-size: 1.5rem; line-height: 1.35; }
 h5 { font-size: 1.25rem; line-height: 1.4; }
 h6 { font-size: 1rem; line-height: 1.5; }
 
+/* Mobile responsive styles */
 @media (max-width: 768px) {
-  h1 { font-size: 2rem; }
-  h2 { font-size: 1.75rem; }
-  h3 { font-size: 1.5rem; }
+  h1 { font-size: 1.8rem; }
+  h2 { font-size: 1.5rem; }
+  h3 { font-size: 1.3rem; }
+  h4 { font-size: 1.2rem; }
+
+  .container {
+    padding: 0 0.5rem;
+  }
+
+  /* Ensure cards are responsive */
+  .mantine-Card-root {
+    margin-bottom: 1rem;
+  }
+
+  /* Stack buttons vertically on very small screens */
+  .mantine-Group-root {
+    flex-wrap: wrap;
+  }
+
+  /* Make tables scroll horizontally */
+  .mantine-Table-root {
+    min-width: 100%;
+    overflow-x: auto;
+  }
+}
+
+/* Tablet responsive styles */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .container {
+    padding: 0 1rem;
+  }
+}
+
+/* Large screen optimizations */
+@media (min-width: 1200px) {
+  .container {
+    max-width: 1200px;
+  }
 }
 
 button:focus,
@@ -131,19 +188,47 @@ button:focus-visible {
 .leaflet-container {
   height: 100% !important;
   width: 100% !important;
-  z-index: 1;
-  background: #f8f9fa;
+  z-index: 1 !important;
+  background: #f8f9fa !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+/* Force map to be visible */
+.leaflet-map-pane {
+  z-index: 1 !important;
 }
 
 .leaflet-tile {
   filter: none !important;
   opacity: 1 !important;
+  visibility: visible !important;
 }
 
 .leaflet-tile-loaded {
   opacity: 1 !important;
+  visibility: visible !important;
 }
 
+/* Ensure tiles load properly */
+.leaflet-tile-pane {
+  opacity: 1 !important;
+  visibility: visible !important;
+  z-index: 1 !important;
+}
+
+.leaflet-layer {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Fix for tile loading issues */
+.leaflet-tile-container {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Control styling */
 .leaflet-control-zoom {
   border: none !important;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
@@ -157,26 +242,567 @@ button:focus-visible {
   height: 30px !important;
   line-height: 30px !important;
   text-align: center !important;
+  text-decoration: none !important;
 }
 
 .leaflet-control-zoom a:hover {
   background-color: #f0f0f0 !important;
+  color: #333 !important;
 }
 
+/* Popup styling */
 .leaflet-popup-content-wrapper {
   border-radius: 8px !important;
   box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+  background: white !important;
 }
 
 .leaflet-popup-tip {
   box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+  background: white !important;
 }
 
-/* Ensure map tiles load properly */
+.leaflet-popup-content {
+  margin: 8px 12px !important;
+  line-height: 1.4 !important;
+}
+
+/* Attribution styling */
+.leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.8) !important;
+  font-size: 10px !important;
+}
+
+/* Marker styling */
+.leaflet-marker-icon {
+  border-radius: 50% !important;
+}
+
+/* Responsive map fixes */
+@media (max-width: 768px) {
+  .leaflet-control-zoom {
+    margin-left: 5px !important;
+    margin-top: 5px !important;
+  }
+
+  .leaflet-control-attribution {
+    font-size: 8px !important;
+  }
+
+  .leaflet-popup-content-wrapper {
+    max-width: 250px !important;
+  }
+}
+
+/* Force map container to have proper dimensions */
+.map-container,
+.interactive-map-container {
+  height: 500px !important;
+  width: 100% !important;
+  position: relative !important;
+  overflow: hidden !important;
+  border-radius: 8px !important;
+  border: 1px solid #e9ecef !important;
+  display: block !important;
+  min-height: 400px !important;
+}
+
+.map-container .leaflet-container,
+.interactive-map-container .leaflet-container {
+  height: 500px !important;
+  width: 100% !important;
+  position: relative !important;
+  display: block !important;
+  min-height: 400px !important;
+  background-color: #f8f9fa !important;
+}
+
+/* Ensure tiles load properly */
+.leaflet-tile-container {
+  opacity: 1 !important;
+}
+
+.leaflet-tile {
+  opacity: 1 !important;
+  transition: opacity 0.2s !important;
+}
+
+/* Force proper map sizing on initial load */
+.leaflet-container {
+  height: 100% !important;
+  width: 100% !important;
+  position: relative !important;
+}
+
+.leaflet-map-pane {
+  height: 100% !important;
+  width: 100% !important;
+}
+
+/* Ensure tile layers cover the full map */
 .leaflet-tile-pane {
-  opacity: 1 !important;
+  height: 100% !important;
+  width: 100% !important;
 }
 
+/* Fix for Leaflet map sizing issues */
+.leaflet-container {
+  height: 500px !important;
+  width: 100% !important;
+  position: relative !important;
+  z-index: 1 !important;
+  background: #f8f9fa !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  display: block !important;
+}
+
+/* Force all map layers to proper size */
+.leaflet-map-pane,
+.leaflet-tile-pane,
+.leaflet-overlay-pane,
+.leaflet-shadow-pane,
+.leaflet-marker-pane,
+.leaflet-tooltip-pane,
+.leaflet-popup-pane {
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Ensure tiles cover the full area */
+.leaflet-tile-container {
+  width: 100% !important;
+  height: 100% !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+}
+
+/* React-Leaflet specific fixes */
+.leaflet-container .leaflet-control-container {
+  position: relative !important;
+  z-index: 1000 !important;
+}
+
+/* Fix for react-leaflet MapContainer sizing issues */
+.leaflet-container .leaflet-map-pane {
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  transform: none !important;
+}
+
+/* Ensure proper tile rendering */
+.leaflet-tile {
+  width: 256px !important;
+  height: 256px !important;
+  position: absolute !important;
+}
+
+/* Fix for tile positioning */
 .leaflet-layer {
-  opacity: 1 !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Force proper dimensions on all leaflet elements */
+.leaflet-container,
+.leaflet-container * {
+  box-sizing: border-box !important;
+}
+
+/* Specific fix for small map issue */
+.leaflet-container .leaflet-tile-pane {
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  transform: translate3d(0px, 0px, 0px) !important;
+}
+
+/* FORCE ORIGINAL THEME - OVERRIDE ANY JAVASCRIPT STYLING */
+body {
+  background: #f8f9fa !important;
+  background-color: #f8f9fa !important;
+  background-image: none !important;
+  background-attachment: initial !important;
+  background-size: initial !important;
+  animation: none !important;
+}
+
+#root {
+  background: transparent !important;
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+
+/* PERMANENTLY HIDE TOGGLE BUTTON */
+.tabler-icon-palette,
+.tabler-icon-palette-off,
+[class*="palette"] {
+  display: none !important;
+}
+
+/* HIDE ANY FIXED POSITION ACTION ICONS IN TOP RIGHT */
+.mantine-ActionIcon-root[style*="position: fixed"][style*="top: 20px"][style*="right: 20px"],
+.mantine-ActionIcon-root[style*="position: fixed"][style*="top:20px"][style*="right:20px"] {
+  display: none !important;
+}
+
+/* Responsive Grid and Layout Fixes */
+@media (max-width: 768px) {
+  /* Make grids stack on mobile */
+  .mantine-Grid-root {
+    margin: 0 !important;
+  }
+
+  .mantine-Grid-col {
+    padding: 0.5rem !important;
+  }
+
+  /* Responsive cards */
+  .mantine-Card-root {
+    padding: 1rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  /* Responsive buttons */
+  .mantine-Button-root {
+    font-size: 0.875rem !important;
+    padding: 0.5rem 0.75rem !important;
+  }
+
+  /* Responsive inputs */
+  .mantine-TextInput-root,
+  .mantine-Textarea-root,
+  .mantine-Select-root {
+    margin-bottom: 1rem !important;
+  }
+
+  .mantine-TextInput-input,
+  .mantine-Textarea-input,
+  .mantine-Select-input {
+    font-size: 16px !important; /* Prevent zoom on iOS */
+  }
+
+  /* Responsive modals */
+  .mantine-Modal-content {
+    margin: 1rem !important;
+    max-height: calc(100vh - 2rem) !important;
+  }
+
+  /* Responsive tables */
+  .mantine-Table-root {
+    font-size: 0.875rem !important;
+  }
+
+  .mantine-Table-th,
+  .mantine-Table-td {
+    padding: 0.5rem !important;
+  }
+}
+
+/* Cross-browser compatibility fixes */
+* {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+/* Fix for Safari */
+@supports (-webkit-appearance: none) {
+  .mantine-Button-root {
+    -webkit-appearance: none;
+  }
+
+  .mantine-TextInput-input,
+  .mantine-Textarea-input {
+    -webkit-appearance: none;
+    border-radius: 0.375rem;
+  }
+}
+
+/* Fix for Firefox */
+@-moz-document url-prefix() {
+  .mantine-Button-root {
+    -moz-appearance: none;
+  }
+}
+
+/* Ensure proper scrolling on all devices */
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Touch-friendly interactive elements */
+@media (hover: none) and (pointer: coarse) {
+  .mantine-Button-root,
+  .mantine-ActionIcon-root {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Additional responsive utilities */
+.responsive-hide-mobile {
+  @media (max-width: 768px) {
+    display: none !important;
+  }
+}
+
+.responsive-hide-desktop {
+  @media (min-width: 769px) {
+    display: none !important;
+  }
+}
+
+.responsive-full-width-mobile {
+  @media (max-width: 768px) {
+    width: 100% !important;
+  }
+}
+
+/* Responsive text sizes */
+.responsive-text-sm {
+  @media (max-width: 768px) {
+    font-size: 0.875rem !important;
+  }
+}
+
+.responsive-text-xs {
+  @media (max-width: 768px) {
+    font-size: 0.75rem !important;
+  }
+}
+
+/* Responsive spacing */
+.responsive-p-sm {
+  @media (max-width: 768px) {
+    padding: 0.5rem !important;
+  }
+}
+
+.responsive-m-sm {
+  @media (max-width: 768px) {
+    margin: 0.5rem !important;
+  }
+}
+
+/* Fix for very small screens */
+@media (max-width: 480px) {
+  .container {
+    padding: 0 0.25rem;
+  }
+
+  .mantine-Container-root {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+
+  .mantine-Card-root {
+    padding: 0.75rem !important;
+  }
+
+  .mantine-Button-root {
+    font-size: 0.8rem !important;
+    padding: 0.4rem 0.6rem !important;
+  }
+
+  .mantine-Title-root {
+    font-size: 1.5rem !important;
+  }
+}
+
+/* Landscape mobile optimization */
+@media (max-height: 500px) and (orientation: landscape) {
+  .mantine-AppShell-header {
+    height: 50px !important;
+  }
+
+  .mantine-AppShell-main {
+    padding-top: 4px !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  .mantine-Button-root,
+  .mantine-ActionIcon-root,
+  .mantine-Burger-root {
+    display: none !important;
+  }
+
+  .mantine-Card-root {
+    border: 1px solid #000 !important;
+    break-inside: avoid;
+  }
+}
+
+/* Force navbar responsiveness */
+.mantine-AppShell-header {
+  overflow: hidden !important;
+}
+
+.mantine-AppShell-header > * {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+/* Ensure navbar content doesn't overflow */
+.navbar-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+/* Force responsive behavior on all screen sizes */
+@media (max-width: 1400px) {
+  .navbar-desktop-menu {
+    display: none !important;
+  }
+
+  .navbar-mobile-burger {
+    display: block !important;
+  }
+}
+
+@media (min-width: 1401px) {
+  .navbar-desktop-menu {
+    display: flex !important;
+  }
+
+  .navbar-mobile-burger {
+    display: none !important;
+  }
+}
+
+/* Prevent text overflow in title */
+.navbar-title {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  min-width: 0 !important;
+}
+
+/* Responsive button sizing */
+@media (max-width: 480px) {
+  .navbar-title {
+    font-size: 0.9rem !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar-title {
+    font-size: 1.1rem !important;
+  }
+}
+
+/* Ensure proper flex behavior */
+.navbar-logo-section {
+  min-width: 0 !important;
+  flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  overflow: hidden !important;
+}
+
+.navbar-menu-section {
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  justify-content: flex-end !important;
+}
+
+/* Additional overflow prevention */
+.mantine-AppShell-root,
+.mantine-AppShell-main,
+.mantine-Container-root {
+  overflow-x: hidden !important;
+  max-width: 100% !important;
+}
+
+/* Ensure all Mantine components respect responsive behavior */
+.mantine-Group-root {
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+.mantine-Stack-root {
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+/* Force responsive navbar at specific breakpoints */
+@media (max-width: 1399px) {
+  .navbar-desktop-menu {
+    display: none !important;
+  }
+
+  .navbar-mobile-burger {
+    display: flex !important;
+  }
+}
+
+/* Ensure proper mobile menu behavior */
+@media (max-width: 768px) {
+  .navbar-container {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+
+  .navbar-title {
+    font-size: 1rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-container {
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
+  }
+
+  .navbar-title {
+    font-size: 0.85rem !important;
+  }
+}
+
+/* Dark mode toggle responsive positioning */
+.navbar-desktop-menu {
+  align-items: center !important;
+  gap: 0.25rem !important;
+}
+
+/* Ensure dark mode toggle doesn't cause overflow */
+@media (max-width: 1400px) {
+  .navbar-logo-section {
+    max-width: 70% !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar-logo-section {
+    max-width: 65% !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-logo-section {
+    max-width: 60% !important;
+  }
 }

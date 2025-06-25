@@ -8,6 +8,7 @@ import geocodingRoutes from './geocoding';
 import socialMediaRoutes from './socialMedia';
 import officialUpdatesRoutes from './officialUpdates';
 import realtimeRoutes from './realtime';
+import ingestionRoutes from './ingestion';
 // import geospatialRoutes from './geospatial';
 
 const router = Router();
@@ -26,7 +27,8 @@ router.get('/', (req, res) => {
       auth: '/api/auth',
       socialMedia: '/api/social-media',
       geocoding: '/api/geocoding',
-      officialUpdates: '/api/official-updates'
+      officialUpdates: '/api/official-updates',
+      ingestion: '/api/ingestion'
     },
     documentation: 'https://github.com/yourusername/disaster-response-platform'
   });
@@ -42,6 +44,7 @@ router.use('/geocoding', geocodingRoutes);
 router.use('/social-media', socialMediaRoutes);
 router.use('/official-updates', officialUpdatesRoutes);
 router.use('/realtime', realtimeRoutes);
+router.use('/ingestion', ingestionRoutes);
 // router.use('/geospatial', geospatialRoutes);
 
 // Health check endpoint

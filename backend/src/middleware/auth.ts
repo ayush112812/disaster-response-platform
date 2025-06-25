@@ -66,9 +66,10 @@ export async function authenticateToken(req: AuthenticatedRequest, res: Response
 }
 
 export function authorizeRoles(...roles: string[]) {
-  return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
     if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({ error: 'Unauthorized' });
+      res.status(403).json({ error: 'Unauthorized' });
+      return;
     }
     next();
   };

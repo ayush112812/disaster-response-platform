@@ -4,6 +4,7 @@ import { Notifications } from '@mantine/notifications';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter as Router } from 'react-router-dom';
 import AppRoutes from './routes';
+import { DarkModeProvider } from './contexts/DarkModeContext';
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 
@@ -65,12 +66,14 @@ function App() {
   return (
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
-        <MantineProvider theme={theme}>
-          <Notifications position="top-right" autoClose={5000} />
-          <Router>
-            <AppRoutes />
-          </Router>
-        </MantineProvider>
+        <DarkModeProvider>
+          <MantineProvider theme={theme}>
+            <Notifications position="top-right" autoClose={5000} />
+            <Router>
+              <AppRoutes />
+            </Router>
+          </MantineProvider>
+        </DarkModeProvider>
       </QueryClientProvider>
     </React.StrictMode>
   );

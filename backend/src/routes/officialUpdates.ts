@@ -64,7 +64,7 @@ router.get('/official-updates', [
     const location = req.query.location as string || 'general';
     const limit = parseInt(req.query.limit as string) || 10;
     
-    const updates = await scrapeOfficialUpdates(disasterType, location);
+    const updates = await scrapeOfficialUpdates(disasterType, { location });
     
     // Limit the results
     const limitedUpdates = updates.slice(0, limit);
