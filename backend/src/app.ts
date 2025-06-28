@@ -78,13 +78,46 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   },
 });
 
+// Root endpoint - API welcome message
+app.get('/', (req: Request, res: Response) => {
+  res.status(200).json({
+    name: 'Disaster Response Coordination Platform API',
+    version: '1.0.0',
+    description: 'Backend API for coordinating disaster response efforts with real-time data aggregation',
+    status: 'operational',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    endpoints: {
+      health: '/health',
+      api: '/api',
+      disasters: '/api/disasters',
+      resources: '/api/resources',
+      reports: '/api/reports',
+      socialMedia: '/api/social-media',
+      officialUpdates: '/api/official-updates',
+      geocoding: '/api/geocode',
+      realtime: '/api/realtime'
+    },
+    features: [
+      'Real-time disaster monitoring',
+      'Geospatial resource mapping',
+      'Social media monitoring',
+      'Image verification with AI',
+      'WebSocket real-time updates',
+      'Comprehensive caching system'
+    ],
+    documentation: 'https://github.com/ayush112812/disaster-response-platform',
+    support: 'Built with AI assistance for rapid disaster response coordination'
+  });
+});
+
 // API routes
 app.use(config.api.prefix, routes);
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
-  res.status(200).json({ 
-    status: 'ok', 
+  res.status(200).json({
+    status: 'ok',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
     version: process.env.npm_package_version || '1.0.0'
